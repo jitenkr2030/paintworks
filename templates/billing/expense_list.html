@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Expenses – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-credit-card text-primary"></i> Expenses</h3>
+  <a href="{% url 'billing:expense_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Expense</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>#</th><th>Date</th><th>Category</th><th>Description</th><th>Project</th><th class="text-end">Amount</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td>{{ e.pk }}</td>
+          <td class="small">{{ e.expense_date|date:"Y-m-d"|default:"-" }}</td>
+          <td><span class="badge bg-secondary">{{ e.get_category_display }}</span></td>
+          <td>{{ e.description|truncatechars:40 }}</td>
+          <td class="small">{% if e.project %}<a href="{% url 'projects:detail' e.project.pk %}">{{ e.project.project_number }}</a>{% else %}-{% endif %}</td>
+          <td class="text-end">₹{{ e.amount|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No expenses recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

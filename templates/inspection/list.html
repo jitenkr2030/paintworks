@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Inspections – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-clipboard-data text-primary"></i> Inspections</h3>
+  <div class="btn-group">
+    <a href="?export=xlsx" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+    <a href="{% url 'inspection:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Schedule Inspection</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>#</th><th>Booking</th><th>Inspector</th><th>Scheduled</th><th>Status</th><th>Rooms</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for i in inspections %}
+        <tr>
+          <td>{{ i.pk }}</td>
+          <td>{% if i.booking %}<a href="{% url 'booking:detail' i.booking.pk %}">#{{ i.booking.pk }} {{ i.booking.title }}</a>{% else %}-{% endif %}</td>
+          <td class="small">{{ i.inspector|default:"-" }}</td>
+          <td class="small">{{ i.scheduled_at|date:"Y-m-d H:i"|default:"-" }}</td>
+          <td>
+            {% if i.status == 'completed' or i.status == 'approved' %}<span class="badge bg-success">{{ i.get_status_display }}</span>
+            {% elif i.status == 'in_progress' %}<span class="badge bg-primary">{{ i.get_status_display }}</span>
+            {% elif i.status == 'cancelled' or i.status == 'rejected' %}<span class="badge bg-danger">{{ i.get_status_display }}</span>
+            {% elif i.status == 'pending' or i.status == 'draft' %}<span class="badge bg-warning text-dark">{{ i.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ i.get_status_display }}</span>{% endif %}
+          </td>
+          <td>{{ i.rooms.count }}</td>
+          <td><a href="{% url 'inspection:detail' i.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No inspections yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj %}
+{% include "common/_pagination.html" %}
+{% endif %}
+{% endblock %}

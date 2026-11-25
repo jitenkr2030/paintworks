@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Auto Estimate Preview – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-magic text-primary"></i> Auto Estimate Preview</h3>
+    <span class="text-muted small">From inspection {% if inspection.booking %}#{{ inspection.booking.pk }}{% endif %} – {{ inspection|default:"" }}</span>
+  </div>
+  <div>
+    <a href="{% url 'estimation:create' %}?inspection={{ inspection.pk }}" class="btn btn-success"><i class="bi bi-file-earmark-plus"></i> Create Quotation from Inspection</a>
+    <a href="{% url 'inspection:detail' inspection.pk %}" class="btn btn-link">Back to Inspection</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Total Net Paint Area</div>
+      <div class="stat-value">{{ grand_net|floatformat:0|intcomma }} <small class="fs-6">sq ft</small></div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Total Ceiling Area</div>
+      <div class="stat-value">{{ grand_ceil|floatformat:0|intcomma }} <small class="fs-6">sq ft</small></div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Rooms</div>
+      <div class="stat-value">{{ rooms|length }}</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Grand Total (incl. GST)</div>
+      <div class="stat-value text-success">₹{{ grand_total|floatformat:0|intcomma }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-table"></i> Room-wise Calculation</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle small">
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th class="text-end">Net Area</th>
+            <th class="text-end">Ceiling</th>
+            <th class="text-end">Paint (L)</th>
+            <th class="text-end">Primer (L)</th>
+            <th class="text-end">Putty (kg)</th>
+            <th class="text-end">Paint ₹</th>
+            <th class="text-end">Putty ₹</th>
+            <th class="text-end">Primer ₹</th>
+            <th class="text-end">Ceiling ₹</th>
+            <th class="text-end">Labour ₹</th>
+            <th class="text-end">Room Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td><strong>{{ r.room }}</strong></td>
+            <td class="text-end">{{ r.net_area|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ r.ceiling_area|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ r.paint_litres|floatformat:2 }}</td>
+            <td class="text-end">{{ r.primer_litres|floatformat:2 }}</td>
+            <td class="text-end">{{ r.putty_kg|floatformat:2 }}</td>
+            <td class="text-end">₹{{ r.paint_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">₹{{ r.putty_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">₹{{ r.primer_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">₹{{ r.ceiling_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">₹{{ r.labour_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end"><strong class="text-success">₹{{ r.room_total|floatformat:0|intcomma }}</strong></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="12" class="text-center text-muted py-4">No room measurements found for this inspection.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="table-light">
+            <th colspan="6" class="text-end">Totals</th>
+            <th class="text-end">₹{{ rooms|length }}</th>
+            <th colspan="4"></th>
+            <th class="text-end text-success">₹{{ total|floatformat:0|intcomma }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-receipt"></i> Estimate Summary</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr><th>Subtotal (all rooms)</th><td class="text-end">₹{{ total|floatformat:2|intcomma }}</td></tr>
+          <tr><th>GST (18%)</th><td class="text-end">₹{{ tax_amount|floatformat:2|intcomma }}</td></tr>
+          <tr class="table-success"><th>Grand Total</th><td class="text-end"><strong>₹{{ grand_total|floatformat:2|intcomma }}</strong></td></tr>
+          <tr class="table-warning"><th>Advance (50%)</th><td class="text-end"><strong>₹{{ advance|floatformat:2|intcomma }}</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-info">
+      <div class="card-header bg-light"><i class="bi bi-info-circle text-info"></i> How this is calculated</div>
+      <div class="card-body small">
+        <ul class="mb-0">
+          <li><strong>Paint</strong> = net_area × 2 coats × ₹15/sq ft; litres = (net_area × 2) / 140</li>
+          <li><strong>Putty</strong> = net_area × ₹18/sq ft; kg = (net_area × 2) / 20</li>
+          <li><strong>Primer</strong> = net_area × ₹8/sq ft; litres = net_area / 120</li>
+          <li><strong>Ceiling</strong> = ceiling_area × ₹12/sq ft</li>
+          <li><strong>Labour</strong> = ₹1,500/room</li>
+          <li><strong>GST</strong> = 18% on subtotal</li>
+          <li><strong>Advance</strong> = 50% of grand total</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'estimation:create' %}?inspection={{ inspection.pk }}" class="btn btn-success"><i class="bi bi-file-earmark-plus"></i> Create Quotation from Inspection</a>
+  <a href="{% url 'inspection:detail' inspection.pk %}" class="btn btn-link">Back to Inspection</a>
+</div>
+{% endblock %}

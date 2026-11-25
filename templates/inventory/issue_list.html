@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Material Issues – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-box-arrow-up text-primary"></i> Material Issues</h3>
+  <a href="{% url 'inventory:material_issue_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Issue</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>#</th><th>Date</th><th>Material</th><th>Project</th><th class="text-end">Qty</th><th>Issued By</th></tr>
+      </thead>
+      <tbody>
+        {% for i in issues %}
+        <tr>
+          <td>{{ i.pk }}</td>
+          <td class="small">{{ i.issued_at|date:"Y-m-d"|default:"-" }}</td>
+          <td>{% if i.material %}{{ i.material.name }}{% else %}-{% endif %}</td>
+          <td class="small">{% if i.project %}<a href="{% url 'projects:detail' i.project.pk %}">{{ i.project.project_number }}</a>{% else %}-{% endif %}</td>
+          <td class="text-end">{{ i.quantity|floatformat:2 }} {{ i.material.unit|default:"" }}</td>
+          <td class="small">{{ i.issued_by|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No material issues recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

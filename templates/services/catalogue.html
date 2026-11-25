@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Service Catalogue – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-grid text-primary"></i> Service Catalogue</h3>
+</div>
+
+{% if categories %}
+<div class="row g-3">
+  {% for cat in categories %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header d-flex align-items-center">
+        <i class="bi bi-{{ cat.icon|default:'tags' }} fs-4 text-primary me-2"></i>
+        <strong>{{ cat.name }}</strong>
+      </div>
+      <div class="card-body">
+        {% if cat.description %}<p class="text-muted small">{{ cat.description }}</p>{% endif %}
+        <ul class="list-group list-group-flush">
+          {% for sub in cat.subcategories.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <strong>{{ sub.name }}</strong>
+              <div class="text-muted small">{{ sub.get_default_unit_display|default:sub.default_unit }}</div>
+            </div>
+            <span class="badge bg-light text-dark border">₹{{ sub.default_rate|default:0|intcomma }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted small px-0">No services defined.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="card-body text-center text-muted py-5">No service categories available yet.</div></div>
+{% endif %}
+{% endblock %}

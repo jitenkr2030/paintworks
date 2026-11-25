@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}SaaS Usage Report – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-bar-chart text-primary"></i> SaaS Usage Report</h3>
+  <div>
+    <a href="{% url 'subscriptions:plan_list' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-tags"></i> Plans</a>
+    <a href="{% url 'subscriptions:subscription_list' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-credit-card"></i> Subscriptions</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-building"></i> Company Usage</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Plan</th>
+            <th>Status</th>
+            <th class="text-center">Users</th>
+            <th style="width:160px;">User Usage</th>
+            <th class="text-center">Branches</th>
+            <th style="width:160px;">Branch Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="{% if row.user_count and row.user_limit and row.user_count > row.user_limit %}table-danger{% elif row.branch_count and row.branch_limit and row.branch_count > row.branch_limit %}table-danger{% endif %}">
+            <td><strong>{{ row.company.name }}</strong></td>
+            <td>{% if row.sub %}{{ row.sub.plan.name }}{% else %}<span class="text-muted">No plan</span>{% endif %}</td>
+            <td>
+              {% if not row.sub %}<span class="badge bg-secondary">No subscription</span>
+              {% elif row.sub.status == 'active' %}<span class="badge bg-success">{{ row.sub.get_status_display }}</span>
+              {% elif row.sub.status == 'trial' %}<span class="badge bg-warning text-dark">{{ row.sub.get_status_display }}</span>
+              {% elif row.sub.status == 'past_due' %}<span class="badge bg-danger">{{ row.sub.get_status_display }}</span>
+              {% elif row.sub.status == 'expired' %}<span class="badge bg-danger">{{ row.sub.get_status_display }}</span>
+              {% elif row.sub.status == 'cancelled' %}<span class="badge bg-danger">{{ row.sub.get_status_display }}</span>
+              {% else %}<span class="badge bg-secondary">{{ row.sub.get_status_display }}</span>{% endif %}
+            </td>
+            <td class="text-center">
+              {% if row.user_count is not None %}<strong>{{ row.user_count }}</strong> / {{ row.user_limit|default:"∞" }}{% else %}-{% endif %}
+            </td>
+            <td>
+              {% if row.user_count is not None and row.user_limit %}
+              <div class="progress" style="height:18px;">
+                <div class="progress-bar bg-{% if row.user_count > row.user_limit %}danger{% elif row.user_count|floatformat:0 > row.user_limit|floatformat:0|add:'-1' %}warning{% else %}success{% endif %}" style="width:{% widthratio row.user_count row.user_limit 100 %}%;">{% widthratio row.user_count row.user_limit 100 %}%</div>
+              </div>
+              {% else %}<span class="text-muted small">-</span>{% endif %}
+            </td>
+            <td class="text-center">
+              {% if row.branch_count is not None %}<strong>{{ row.branch_count }}</strong> / {{ row.branch_limit|default:"∞" }}{% else %}-{% endif %}
+            </td>
+            <td>
+              {% if row.branch_count is not None and row.branch_limit %}
+              <div class="progress" style="height:18px;">
+                <div class="progress-bar bg-{% if row.branch_count > row.branch_limit %}danger{% elif row.branch_count|floatformat:0 > row.branch_limit|floatformat:0|add:'-1' %}warning{% else %}success{% endif %}" style="width:{% widthratio row.branch_count row.branch_limit 100 %}%;">{% widthratio row.branch_count row.branch_limit 100 %}%</div>
+              </div>
+              {% else %}<span class="text-muted small">-</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No companies registered yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info mt-3 small">
+  <i class="bi bi-info-circle"></i> Rows highlighted in <span class="badge bg-danger">red</span> indicate companies exceeding their plan limits. Contact them to upgrade.
+</div>
+
+<div class="mt-2">
+  <a href="{% url 'subscriptions:subscription_list' %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to subscriptions</a>
+</div>
+{% endblock %}

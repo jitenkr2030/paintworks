@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Measurement Report #{{ inspection.pk }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-file-earmark-bar text-primary"></i> Measurement Report</h3>
+  <button class="btn btn-outline-secondary d-print-none" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Inspection #{{ inspection.pk }}</strong><br>
+        {% if inspection.booking and inspection.booking.customer %}Customer: {{ inspection.booking.customer.name }}<br>{% endif %}
+        {% if inspection.booking and inspection.booking.site %}Property: {{ inspection.booking.site.label }}<br>{% endif %}
+        Inspector: {{ inspection.inspector|default:"-" }}<br>
+        Scheduled: {{ inspection.scheduled_at|date:"Y-m-d"|default:"-" }}
+      </div>
+      <div class="col-md-6 text-md-end text-muted small">
+        Generated: {% now "Y-m-d H:i" %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="card text-center bg-light">
+      <div class="card-body">
+        <div class="text-muted small">Total Wall Area</div>
+        <h4 class="mb-0">{{ totals.wall|floatformat:2 }} <small>sq ft</small></h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center bg-light">
+      <div class="card-body">
+        <div class="text-muted small">Total Ceiling</div>
+        <h4 class="mb-0">{{ totals.ceiling|floatformat:2 }} <small>sq ft</small></h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center bg-light">
+      <div class="card-body">
+        <div class="text-muted small">Openings</div>
+        <h4 class="mb-0">{{ totals.openings|floatformat:2 }} <small>sq ft</small></h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center bg-primary text-white">
+      <div class="card-body">
+        <div class="small">Net Paintable Area</div>
+        <h4 class="mb-0">{{ totals.net|floatformat:2 }} <small>sq ft</small></h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-rulers"></i> Room-by-Room Breakdown</div>
+  <div class="card-body p-0">
+    <table class="table table-sm table-bordered mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Room</th>
+          <th>L</th><th>W</th><th>H</th>
+          <th>Wall</th>
+          <th>Openings</th>
+          <th>Net Paint</th>
+          <th>Ceiling</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rooms %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td>{{ r.length|floatformat:2 }}</td>
+          <td>{{ r.width|floatformat:2 }}</td>
+          <td>{{ r.height|floatformat:2 }}</td>
+          <td>{{ r.wall_area|floatformat:2 }}</td>
+          <td>{{ r.openings_area|floatformat:2 }}</td>
+          <td>{{ r.net_paint_area|floatformat:2 }}</td>
+          <td>{{ r.total_ceiling_area|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-3">No rooms recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="table-light">
+        <tr>
+          <th>Total</th>
+          <th colspan="3"></th>
+          <th>{{ totals.wall|floatformat:2 }}</th>
+          <th>{{ totals.openings|floatformat:2 }}</th>
+          <th>{{ totals.net|floatformat:2 }}</th>
+          <th>{{ totals.ceiling|floatformat:2 }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

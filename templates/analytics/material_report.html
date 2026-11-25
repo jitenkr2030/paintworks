@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Material Report – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h3 class="mb-0"><i class="bi bi-boxes text-primary"></i> Material Report</h3>
+  <div class="text-muted small">Showing {{ materials|length }} material{{ materials|length|pluralize }}</div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-box-seam"></i> Stock Summary</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Material</th>
+            <th>Category</th>
+            <th>Brand</th>
+            <th>Unit</th>
+            <th class="text-end">Purchase Price</th>
+            <th class="text-end">Min Stock</th>
+            <th class="text-end">Current Stock</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in materials %}
+            <tr {% if m.needs_reorder %}class="table-danger"{% endif %}>
+              <td class="text-muted">{{ forloop.counter }}</td>
+              <td class="fw-semibold">{{ m.name }} {% if m.sku %}<div class="text-muted small">{{ m.sku }}</div>{% endif %}</td>
+              <td>{{ m.category|default:"—" }}</td>
+              <td>{{ m.brand|default:"—" }}</td>
+              <td>{{ m.get_unit_display }}</td>
+              <td class="text-end">₹{{ m.purchase_price|intcomma }}</td>
+              <td class="text-end">{{ m.minimum_stock }}</td>
+              <td class="text-end {% if m.needs_reorder %}text-danger fw-bold{% else %}text-success fw-semibold{% endif %}">{{ m.current_stock }}</td>
+              <td class="text-center">
+                {% if m.needs_reorder %}
+                  <span class="badge bg-danger badge-status"><i class="bi bi-exclamation-triangle"></i> Low Stock</span>
+                {% else %}
+                  <span class="badge bg-success badge-status"><i class="bi bi-check-circle"></i> OK</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="9" class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.6rem;"></i><div class="mt-2">No materials found.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

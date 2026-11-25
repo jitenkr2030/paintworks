@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Sales Report – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h3 class="mb-0"><i class="bi bi-graph-up-arrow text-primary"></i> Sales Report</h3>
+  <div class="text-muted small">Showing latest {{ invoices|length }} invoices</div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4 col-6">
+    <div class="card stat-card p-3 h-100">
+      <div class="stat-label">Total Invoiced</div>
+      <div class="stat-value text-primary">₹{{ total_invoiced|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-file-earmark-text"></i> Gross billing</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-6">
+    <div class="card stat-card success p-3 h-100">
+      <div class="stat-label">Total Collected</div>
+      <div class="stat-value text-success">₹{{ total_paid|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-cash-coin"></i> Payments received</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-6">
+    <div class="card stat-card danger p-3 h-100">
+      <div class="stat-label">Outstanding</div>
+      <div class="stat-value text-danger">₹{{ total_outstanding|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-clock-history"></i> Yet to be paid</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-receipt"></i> Invoices</span>
+    <a href="{% url 'billing:invoice_list' %}" class="small">View all invoices</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Due Date</th>
+            <th class="text-end">Grand Total</th>
+            <th class="text-end">Paid</th>
+            <th class="text-end">Balance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+            <tr>
+              <td class="fw-semibold">{{ inv.invoice_number }}</td>
+              <td>{{ inv.customer.name|truncatechars:28 }}</td>
+              <td>{{ inv.invoice_date|date:"d M Y" }}</td>
+              <td>{{ inv.due_date|date:"d M Y"|default:"—" }}</td>
+              <td class="text-end">₹{{ inv.grand_total|intcomma }}</td>
+              <td class="text-end text-success">₹{{ inv.amount_paid|intcomma }}</td>
+              <td class="text-end {% if inv.balance_due > 0 %}text-danger fw-semibold{% endif %}">₹{{ inv.balance_due|intcomma }}</td>
+              <td>
+                {% if inv.status == 'paid' %}<span class="badge bg-success badge-status">{{ inv.get_status_display }}</span>
+                {% elif inv.status == 'partial' %}<span class="badge bg-warning text-dark badge-status">{{ inv.get_status_display }}</span>
+                {% elif inv.status == 'sent' %}<span class="badge bg-primary badge-status">{{ inv.get_status_display }}</span>
+                {% elif inv.status == 'cancelled' %}<span class="badge bg-danger badge-status">{{ inv.get_status_display }}</span>
+                {% else %}<span class="badge bg-secondary badge-status">{{ inv.get_status_display }}</span>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.6rem;"></i><div class="mt-2">No invoices found.</div></td></tr>
+          {% endfor %}
+        </tbody>
+        {% if invoices %}
+        <tfoot>
+          <tr class="table-light fw-semibold">
+            <td colspan="4" class="text-end">Totals</td>
+            <td class="text-end">₹{{ total_invoiced|intcomma }}</td>
+            <td class="text-end text-success">₹{{ total_paid|intcomma }}</td>
+            <td class="text-end text-danger">₹{{ total_outstanding|intcomma }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

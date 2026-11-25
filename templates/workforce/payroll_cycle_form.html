@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ title }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-cash-stack text-primary"></i> {{ title }}</h3>
+  <a href="{% url 'workforce:payroll_cycle_list' %}" class="btn btn-link">Cancel</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-pencil-square"></i> Cycle Details</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save</button>
+          <a href="{% url 'workforce:payroll_cycle_list' %}" class="btn btn-link">Cancel</a>
+        </form>
+        <div class="form-text small mt-2">
+          <i class="bi bi-info-circle"></i> On save, a payroll entry is auto-created for each active worker based on attendance records within the cycle's date range.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

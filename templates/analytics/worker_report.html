@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Worker Report – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h3 class="mb-0"><i class="bi bi-person-badge text-primary"></i> Worker Report</h3>
+  <div class="text-muted small">Showing {{ rows|length }} worker{{ rows|length|pluralize }}</div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-people"></i> Workforce Productivity</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Worker</th>
+            <th>Type</th>
+            <th>Payment Mode</th>
+            <th>Phone</th>
+            <th class="text-center">Present Days</th>
+            <th class="text-center">Total Hours</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td class="text-muted">{{ forloop.counter }}</td>
+              <td class="fw-semibold">{{ row.worker.name }}</td>
+              <td><span class="badge bg-secondary badge-status">{{ row.worker.get_worker_type_display }}</span></td>
+              <td>{{ row.worker.get_payment_mode_display }}</td>
+              <td>{{ row.worker.phone|default:"—" }}</td>
+              <td class="text-center">
+                {% if row.present_days %}<span class="badge bg-success">{{ row.present_days }}</span>{% else %}<span class="text-muted">0</span>{% endif %}
+              </td>
+              <td class="text-center">
+                {% if row.total_hours %}<span class="badge bg-primary">{{ row.total_hours }} hrs</span>{% else %}<span class="text-muted">0 hrs</span>{% endif %}
+              </td>
+              <td>
+                {% if row.worker.is_active %}<span class="badge bg-success badge-status">Active</span>{% else %}<span class="badge bg-secondary badge-status">Inactive</span>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.6rem;"></i><div class="mt-2">No workers found.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

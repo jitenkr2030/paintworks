@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Business Dashboard – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-speedometer2 text-primary"></i> Business Dashboard</h3>
+  <div class="text-muted small">
+    <i class="bi bi-calendar3"></i> {{ request.user.company|default:"All Companies" }}
+  </div>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label small text-muted mb-1">From Date</label>
+      <input type="date" name="from" value="{{ range_start|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small text-muted mb-1">To Date</label>
+      <input type="date" name="to" value="{{ range_end|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel"></i> Apply</button>
+    </div>
+    <div class="col-md-2">
+      <a href="{% url 'analytics:business_dashboard' %}" class="btn btn-sm btn-outline-secondary w-100">This Month</a>
+    </div>
+    <div class="col-md-2 text-end">
+      <span class="text-muted small">Revenue period: {{ range_start|date:"M d" }} – {{ range_end|date:"M d, Y" }}</span>
+    </div>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Total Revenue (Month)</div>
+      <div class="stat-value text-success">₹{{ total_revenue|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-arrow-up"></i> Payments received</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card warning p-3">
+      <div class="stat-label">Active Projects</div>
+      <div class="stat-value">{{ active_projects }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-hammer"></i> In progress</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card p-3">
+      <div class="stat-label">New Enquiries</div>
+      <div class="stat-value">{{ new_enquiries }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-telephone"></i> This month</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card danger p-3">
+      <div class="stat-label">Pending Payments</div>
+      <div class="stat-value text-danger">₹{{ pending_payments|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-clock-history"></i> Customer dues</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-graph-up"></i> Revenue – Last 6 Months</div>
+      <div class="card-body">
+        <canvas id="revenueChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-pie-chart"></i> Project Status</div>
+      <div class="card-body">
+        <canvas id="projectStatusChart" height="200"></canvas>
+        <table class="table table-sm mt-3 mb-0 small">
+          <tr><td><span class="badge bg-success">Completed</span></td><td class="text-end">{{ completed }} ({{ completed_pct }}%)</td></tr>
+          <tr><td><span class="badge bg-primary">In Progress</span></td><td class="text-end">{{ in_progress }} ({{ in_progress_pct }}%)</td></tr>
+          <tr><td><span class="badge bg-warning">Planned</span></td><td class="text-end">{{ planned }} ({{ planned_pct }}%)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar-check"></i> Recent Bookings</span>
+        <a href="{% url 'booking:list' %}" class="small">View all</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for b in recent_bookings %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>#{{ b.pk }}</strong> – {{ b.customer.name }}
+              <div class="text-muted small">{{ b.title|truncatechars:60 }}</div>
+            </div>
+            <span class="badge bg-secondary">{{ b.get_status_display }}</span>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">No bookings yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-exclamation-triangle"></i> Low Stock Alerts</div>
+      <div class="list-group list-group-flush">
+        {% for m in low_stock %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ m.name }}</strong>
+              <div class="text-muted small">{{ m.brand|default:"" }} · {{ m.category }}</div>
+            </div>
+            <span class="badge bg-danger">{{ m.current_stock }} {{ m.unit }}</span>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">All materials above reorder level.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-3 col-6">
+    <div class="card p-3 text-center">
+      <i class="bi bi-people text-primary" style="font-size:1.8rem;"></i>
+      <div class="stat-value mt-1">{{ total_customers }}</div>
+      <div class="stat-label">Customers</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card p-3 text-center">
+      <i class="bi bi-tools text-primary" style="font-size:1.8rem;"></i>
+      <div class="stat-value mt-1">{{ total_workers }}</div>
+      <div class="stat-label">Workers</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card p-3 text-center">
+      <i class="bi bi-exclamation-circle text-warning" style="font-size:1.8rem;"></i>
+      <div class="stat-value mt-1">{{ pending_complaints }}</div>
+      <div class="stat-label">Pending Complaints</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card p-3 text-center">
+      <i class="bi bi-box-seam text-primary" style="font-size:1.8rem;"></i>
+      <div class="stat-value mt-1">{{ low_stock|length }}</div>
+      <div class="stat-label">Low Stock Items</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const months = {{ months|safe }};
+const revenues = {{ revenues|safe }};
+
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: revenues,
+      backgroundColor: 'rgba(13, 110, 253, 0.85)',
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true } }
+  }
+});
+
+new Chart(document.getElementById('projectStatusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Completed', 'In Progress', 'Planned'],
+    datasets: [{
+      data: [{{ completed }}, {{ in_progress }}, {{ planned }}],
+      backgroundColor: ['#198754', '#0d6efd', '#ffc107'],
+    }]
+  },
+  options: {
+    plugins: { legend: { position: 'bottom' } }
+  }
+});
+</script>
+{% endblock %}

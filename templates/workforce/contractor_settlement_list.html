@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Contractor Settlements – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-file-earmark-text text-primary"></i> Contractor Settlements</h3>
+  <a href="{% url 'workforce:contractor_settlement_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Settlement</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Contractor</th>
+            <th>Project</th>
+            <th>Period</th>
+            <th class="text-end">Agreed</th>
+            <th class="text-center" style="width:120px;">Work %</th>
+            <th class="text-end">Payable</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td><a href="{% url 'workforce:detail' item.contractor.pk %}"><strong>{{ item.contractor.name }}</strong></a></td>
+            <td class="small">{% if item.project %}<a href="{% url 'projects:detail' item.project.pk %}">{{ item.project.project_number }}</a>{% else %}-{% endif %}</td>
+            <td class="small">{{ item.period_start|date:"Y-m-d" }} → {{ item.period_end|date:"Y-m-d" }}</td>
+            <td class="text-end">₹{{ item.agreed_amount|floatformat:0|intcomma }}</td>
+            <td>
+              <div class="progress" style="height:18px;">
+                <div class="progress-bar bg-{% if item.work_completed_percent >= 100 %}success{% elif item.work_completed_percent >= 50 %}primary{% else %}warning{% endif %}" style="width:{{ item.work_completed_percent }}%;">{{ item.work_completed_percent }}%</div>
+              </div>
+            </td>
+            <td class="text-end"><strong>₹{{ item.payable_amount|floatformat:0|intcomma }}</strong></td>
+            <td>
+              {% if item.status == 'paid' %}<span class="badge bg-success">{{ item.get_status_display }}</span>
+              {% elif item.status == 'approved' %}<span class="badge bg-primary">{{ item.get_status_display }}</span>
+              {% elif item.status == 'cancelled' %}<span class="badge bg-danger">{{ item.get_status_display }}</span>
+              {% elif item.status == 'draft' %}<span class="badge bg-warning text-dark">{{ item.get_status_display }}</span>
+              {% else %}<span class="badge bg-secondary">{{ item.get_status_display }}</span>{% endif %}
+              {% if item.paid_on %}<div class="text-muted small">{{ item.paid_on|date:"Y-m-d" }}</div>{% endif %}
+            </td>
+            <td class="text-end">
+              {% if item.status == 'approved' %}
+              <form method="post" action="{% url 'workforce:contractor_settlement_pay' item.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-success" title="Mark Paid"><i class="bi bi-cash"></i> Mark Paid</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center text-muted py-4">No contractor settlements yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'workforce:payroll_cycle_list' %}" class="btn btn-outline-primary"><i class="bi bi-cash-stack"></i> Payroll Cycles</a>
+  <a href="{% url 'workforce:list' %}" class="btn btn-link">Back to Workers</a>
+</div>
+{% endblock %}

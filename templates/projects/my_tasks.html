@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}My Tasks – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-list-task text-primary"></i> My Tasks</h3>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Task</th><th>Project</th><th>Status</th><th>Due</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for t in tasks %}
+        <tr>
+          <td><strong>{{ t.title }}</strong></td>
+          <td><a href="{% url 'projects:detail' t.project_id %}">{{ t.project.project_number|default:"Project" }}</a></td>
+          <td>
+            {% if t.status == 'completed' %}<span class="badge bg-success">{{ t.get_status_display }}</span>
+            {% elif t.status == 'in_progress' %}<span class="badge bg-primary">{{ t.get_status_display }}</span>
+            {% elif t.status == 'cancelled' %}<span class="badge bg-danger">{{ t.get_status_display }}</span>
+            {% elif t.status == 'pending' or t.status == 'new' %}<span class="badge bg-warning text-dark">{{ t.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ t.get_status_display }}</span>{% endif %}
+          </td>
+          <td class="small">{{ t.due_date|date:"Y-m-d"|default:"-" }}</td>
+          <td><a href="{% url 'projects:detail' t.project_id %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No tasks assigned to you.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

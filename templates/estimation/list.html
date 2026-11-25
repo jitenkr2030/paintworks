@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Quotations – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-file-earmark-text text-primary"></i> Quotations</h3>
+  <div class="btn-group">
+    <a href="?export=xlsx" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+    <a href="{% url 'estimation:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Quotation</a>
+  </div>
+</div>
+
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a href="{% url 'estimation:list' %}" class="badge rounded-pill {% if not current_status %}bg-primary{% else %}bg-light text-dark border{% endif %} text-decoration-none">All</a>
+  {% for s in statuses %}
+  <a href="?status={{ s }}" class="badge rounded-pill {% if current_status == s %}bg-primary{% else %}bg-light text-dark border{% endif %} text-decoration-none">{{ s|title }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Quote #</th><th>Customer</th><th>Date</th><th>Status</th><th class="text-end">Grand Total</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for q in quotations %}
+        <tr>
+          <td><a href="{% url 'estimation:detail' q.pk %}"><strong>{{ q.quote_number }}</strong></a></td>
+          <td>{% if q.customer %}{{ q.customer.name }}{% else %}-{% endif %}</td>
+          <td class="small">{{ q.created_at|date:"Y-m-d" }}</td>
+          <td>
+            {% if q.status == 'approved' or q.status == 'converted' %}<span class="badge bg-success">{{ q.get_status_display }}</span>
+            {% elif q.status == 'sent' %}<span class="badge bg-primary">{{ q.get_status_display }}</span>
+            {% elif q.status == 'rejected' or q.status == 'cancelled' %}<span class="badge bg-danger">{{ q.get_status_display }}</span>
+            {% elif q.status == 'draft' or q.status == 'pending' or q.status == 'new' %}<span class="badge bg-warning text-dark">{{ q.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ q.get_status_display }}</span>{% endif %}
+          </td>
+          <td class="text-end">₹{{ q.grand_total|floatformat:2|intcomma }}</td>
+          <td><a href="{% url 'estimation:detail' q.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No quotations found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj %}
+{% include "common/_pagination.html" %}
+{% endif %}
+{% endblock %}

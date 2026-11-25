@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Notification Logs – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-clock-history text-primary"></i> Notification Logs</h3>
+  <a href="{% url 'notifications:send' %}" class="btn btn-primary"><i class="bi bi-send"></i> Send Notification</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0 align-middle">
+      <thead>
+        <tr><th>Recipient</th><th>Customer</th><th>Channel</th><th>Template</th><th>Status</th><th>Sent At</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.recipient|default:"-" }}</td>
+          <td class="small">{% if log.customer %}{{ log.customer.name }}{% else %}-{% endif %}</td>
+          <td>
+            {% if log.channel == 'whatsapp' %}<span class="badge bg-success">{{ log.get_channel_display }}</span>
+            {% elif log.channel == 'sms' %}<span class="badge bg-primary">{{ log.get_channel_display }}</span>
+            {% elif log.channel == 'email' %}<span class="badge bg-info text-dark">{{ log.get_channel_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ log.get_channel_display }}</span>{% endif %}
+          </td>
+          <td class="small">{{ log.template.name|default:"-" }}</td>
+          <td>
+            {% if log.status == 'delivered' %}<span class="badge bg-success">{{ log.get_status_display }}</span>
+            {% elif log.status == 'sent' %}<span class="badge bg-primary">{{ log.get_status_display }}</span>
+            {% elif log.status == 'queued' %}<span class="badge bg-warning text-dark">{{ log.get_status_display }}</span>
+            {% elif log.status == 'failed' %}<span class="badge bg-danger">{{ log.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ log.get_status_display }}</span>{% endif %}
+            {% if log.error_message %}<div class="text-danger small">{{ log.error_message|truncatechars:60 }}</div>{% endif %}
+          </td>
+          <td class="small">{{ log.sent_at|date:"Y-m-d H:i"|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No notification logs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'notifications:dashboard' %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+{% endblock %}

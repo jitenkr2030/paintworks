@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Quotation Report – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h3 class="mb-0"><i class="bi bi-file-earmark-text text-primary"></i> Quotation Report</h3>
+  <div class="text-muted small">Showing latest {{ quotations|length }} quotations</div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4 col-6">
+    <div class="card stat-card success p-3 h-100">
+      <div class="stat-label">Approved</div>
+      <div class="stat-value text-success">{{ approved }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-check-circle"></i> Won quotations</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-6">
+    <div class="card stat-card danger p-3 h-100">
+      <div class="stat-label">Rejected</div>
+      <div class="stat-value text-danger">{{ rejected }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-x-circle"></i> Lost quotations</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-6">
+    <div class="card stat-card warning p-3 h-100">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value text-warning">{{ pending }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-clock-history"></i> Draft / Sent</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-ul"></i> Quotations</span>
+    <a href="{% url 'estimation:list' %}" class="small">View all quotations</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Quote #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Valid Until</th>
+            <th class="text-end">Grand Total</th>
+            <th class="text-end">Advance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in quotations %}
+            <tr>
+              <td class="fw-semibold">{{ q.quote_number }}</td>
+              <td>{{ q.customer.name|truncatechars:28 }}</td>
+              <td>{{ q.quotation_date|date:"d M Y" }}</td>
+              <td>{{ q.valid_until|date:"d M Y"|default:"—" }}</td>
+              <td class="text-end">₹{{ q.grand_total|intcomma }}</td>
+              <td class="text-end">₹{{ q.advance_amount|intcomma }}</td>
+              <td>
+                {% if q.status == 'approved' %}<span class="badge bg-success badge-status">{{ q.get_status_display }}</span>
+                {% elif q.status == 'sent' %}<span class="badge bg-primary badge-status">{{ q.get_status_display }}</span>
+                {% elif q.status == 'rejected' %}<span class="badge bg-danger badge-status">{{ q.get_status_display }}</span>
+                {% elif q.status == 'converted' %}<span class="badge bg-success badge-status">{{ q.get_status_display }}</span>
+                {% elif q.status == 'expired' %}<span class="badge bg-secondary badge-status">{{ q.get_status_display }}</span>
+                {% else %}<span class="badge bg-warning text-dark badge-status">{{ q.get_status_display }}</span>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.6rem;"></i><div class="mt-2">No quotations found.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

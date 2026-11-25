@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Paint Calculator – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-calculator text-primary"></i> Paint Quantity Calculator</h3>
+  <a href="{% url 'estimation:list' %}" class="btn btn-link">Back to Quotations</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-sliders"></i> Inputs</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-calculator"></i> Calculate</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    {% if result %}
+    <div class="card border-success">
+      <div class="card-header bg-success text-white"><i class="bi bi-bucket"></i> Material Requirements</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Material</th><th class="text-end">Quantity Needed</th><th class="text-end">Packaging</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><i class="bi bi-droplet text-primary"></i> <strong>Paint</strong>
+                  <div class="text-muted small">{{ result.area|floatformat:0|intcomma }} sq ft × {{ result.coats }} coats @ coverage/litre</div>
+                </td>
+                <td class="text-end"><strong>{{ result.paint_litres|floatformat:2 }} L</strong></td>
+                <td class="text-end"><span class="badge bg-info text-dark">{{ result.paint_4l_cans }} × 4L cans</span></td>
+              </tr>
+              <tr>
+                <td><i class="bi bi-brush text-warning"></i> <strong>Primer</strong>
+                  <div class="text-muted small">1 coat @ coverage/litre</div>
+                </td>
+                <td class="text-end"><strong>{{ result.primer_litres|floatformat:2 }} L</strong></td>
+                <td class="text-end"><span class="badge bg-info text-dark">{{ result.primer_litres|floatformat:0 }} L</span></td>
+              </tr>
+              <tr>
+                <td><i class="bi bi-bucket-fill text-secondary"></i> <strong>Wall Putty</strong>
+                  <div class="text-muted small">2 coats @ coverage/kg</div>
+                </td>
+                <td class="text-end"><strong>{{ result.putty_kg|floatformat:2 }} kg</strong></td>
+                <td class="text-end"><span class="badge bg-info text-dark">{{ result.putty_25kg_bags }} × 25kg bags</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-4">
+        <div class="card text-bg-info h-100">
+          <div class="card-body text-center">
+            <i class="bi bi-droplet-half" style="font-size:1.6rem;"></i>
+            <div class="h4 mt-2 mb-0">{{ result.paint_litres|floatformat:2 }} L</div>
+            <div class="small">Paint Required</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-bg-warning h-100">
+          <div class="card-body text-center">
+            <i class="bi bi-brush" style="font-size:1.6rem;"></i>
+            <div class="h4 mt-2 mb-0">{{ result.primer_litres|floatformat:2 }} L</div>
+            <div class="small">Primer Required</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-bg-secondary h-100">
+          <div class="card-body text-center">
+            <i class="bi bi-bucket-fill" style="font-size:1.6rem;"></i>
+            <div class="h4 mt-2 mb-0">{{ result.putty_kg|floatformat:2 }} kg</div>
+            <div class="small">Putty Required</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3 border-info">
+      <div class="card-header bg-light"><i class="bi bi-lightbulb text-warning"></i> Buying Guide</div>
+      <div class="card-body small">
+        <ul class="mb-0">
+          <li>Buy <strong>{{ result.paint_4l_cans }} cans of 4L paint</strong> (rounds up from {{ result.paint_litres|floatformat:2 }} L).</li>
+          <li>Buy <strong>{{ result.putty_25kg_bags }} bags of 25kg putty</strong> (rounds up from {{ result.putty_kg|floatformat:2 }} kg).</li>
+          <li>Add 10% buffer for touch-ups and wastage.</li>
+        </ul>
+      </div>
+    </div>
+    {% else %}
+    <div class="card text-center text-muted">
+      <div class="card-body py-5">
+        <i class="bi bi-calculator" style="font-size:3rem;"></i>
+        <p class="mt-3 mb-0">Enter the net paint area and coverage rates, then click <strong>Calculate</strong> to see material requirements.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

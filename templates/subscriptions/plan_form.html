@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ title }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-credit-card text-primary"></i> {{ title }}</h3>
+  <a href="{% url 'subscriptions:plan_list' %}" class="btn btn-link">Cancel</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-pencil-square"></i> Plan Details</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save</button>
+          <a href="{% url 'subscriptions:plan_list' %}" class="btn btn-link">Cancel</a>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3 border-info">
+      <div class="card-header bg-light"><i class="bi bi-lightbulb text-warning"></i> Tips</div>
+      <div class="card-body small">
+        <ul class="mb-0">
+          <li><strong>Features</strong> field expects a JSON list of strings, e.g. <code>["Advanced reports", "Multi-branch", "API access"]</code>.</li>
+          <li><strong>Display order</strong> controls the order in which plans appear on the pricing grid (lower = first).</li>
+          <li>Disable a plan by unchecking <em>Is active</em> — existing subscriptions remain unaffected.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

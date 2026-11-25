@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}AI Chatbot – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-robot text-primary"></i> AI Assistant Chat</h3>
+  <a href="{% url 'aiassistant:dashboard' %}" class="btn btn-link">Back to Dashboard</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-robot"></i> PaintBot</span>
+        <span class="small">Session: {{ session.session_key|slice:":8" }}</span>
+      </div>
+      <div class="card-body chat-scroll" style="max-height:60vh; overflow-y:auto; background:#f8f9fa;">
+        {% for m in messages %}
+          {% if m.role == 'user' %}
+          <div class="d-flex justify-content-end mb-3">
+            <div class="bg-primary text-white rounded px-3 py-2" style="max-width:80%;">
+              <div class="small">{{ m.content|linebreaksbr }}</div>
+              <div class="text-end text-white-50" style="font-size:0.7rem;">{{ m.created_at|date:"H:i" }}</div>
+            </div>
+          </div>
+          {% elif m.role == 'assistant' %}
+          <div class="d-flex justify-content-start mb-3">
+            <div class="bg-light border rounded px-3 py-2" style="max-width:80%;">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-robot text-primary"></i>
+                {% if m.intent %}<span class="badge bg-secondary text-capitalize">{{ m.intent }}</span>{% endif %}
+              </div>
+              <div class="small">{{ m.content|linebreaksbr }}</div>
+              <div class="text-end text-muted" style="font-size:0.7rem;">{{ m.created_at|date:"H:i" }}</div>
+            </div>
+          </div>
+          {% endif %}
+        {% empty %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-robot" style="font-size:2.5rem;"></i>
+          <p class="mt-2 mb-0">Start a conversation with PaintBot.</p>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="card-footer">
+        <form method="post">
+          {% csrf_token %}
+          <div class="input-group">
+            <input type="text" name="message" class="form-control" placeholder="Type a message… (e.g. 'I need painting quote for 2BHK')" autocomplete="off" required>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Send</button>
+          </div>
+        </form>
+        <div class="text-muted small mt-2">
+          <i class="bi bi-lightbulb"></i> Try: <em>"Book a service"</em>, <em>"Pricing"</em>, <em>"Warranty"</em>, <em>"Contact"</em>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-scroll chat to bottom on load
+(function(){
+  var el = document.querySelector('.chat-scroll');
+  if (el) { el.scrollTop = el.scrollHeight; }
+})();
+</script>
+{% endblock %}

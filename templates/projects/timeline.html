@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ project.project_number }} Timeline – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-bar-chart-steps text-primary"></i> Timeline</h3>
+    <span class="text-muted small">{{ project.project_number }} – {{ project.title }}</span>
+  </div>
+  <div>
+    <a href="{% url 'projects:add_task' project.pk %}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Add Task</a>
+    <a href="{% url 'projects:detail' project.pk %}" class="btn btn-link">Back to Project</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Timeline Window</div>
+      <div class="stat-value">{{ total_days }} <small class="fs-6 text-muted">days</small></div>
+      <div class="text-muted small mt-1">{{ timeline_start|date:"Y-m-d" }} → {{ timeline_end|date:"Y-m-d" }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Tasks</div>
+      <div class="stat-value">{{ rows|length }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-list-task"></i> Scheduled</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Progress</div>
+      <div class="stat-value">{{ project.progress_percent|default:0 }}%</div>
+      <div class="progress mt-1" style="height:6px;">
+        <div class="progress-bar bg-{% if project.progress_percent >= 100 %}success{% elif project.progress_percent >= 50 %}primary{% else %}warning{% endif %}" style="width:{{ project.progress_percent|default:0 }}%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-bar-chart-steps"></i> Gantt View</span>
+    <span class="small text-muted">
+      <span class="badge bg-success me-1">Done</span>
+      <span class="badge bg-primary me-1">In Progress</span>
+      <span class="badge bg-warning text-dark me-1">Todo</span>
+      <span class="badge bg-danger">Blocked</span>
+    </span>
+  </div>
+  <div class="card-body">
+    {% if rows %}
+    <!-- Date axis -->
+    <div class="timeline-axis mb-2 position-relative" style="height:24px;">
+      <div class="d-flex justify-content-between small text-muted border-bottom pb-1">
+        <span><i class="bi bi-flag-fill text-success"></i> {{ timeline_start|date:"M d" }}</span>
+        <span>{{ timeline_start|date:"M d" }}</span>
+        <span class="text-center"><i class="bi bi-arrow-left-right"></i> {{ total_days }} days</span>
+        <span>{{ timeline_end|date:"M d" }}</span>
+        <span><i class="bi bi-flag-checkered text-primary"></i> {{ timeline_end|date:"M d" }}</span>
+      </div>
+    </div>
+
+    <!-- Gantt rows -->
+    <div class="timeline-rows">
+      {% for row in rows %}
+      <div class="d-flex align-items-center mb-2" style="min-height:34px;">
+        <div style="width:200px;" class="small text-truncate pe-2">
+          <strong>{{ row.task.title|truncatechars:28 }}</strong>
+          <div class="text-muted">{{ row.start|date:"M d" }} – {{ row.end|date:"M d" }}</div>
+        </div>
+        <div class="position-relative flex-grow-1 bg-light rounded" style="height:28px;">
+          <div class="position-absolute rounded shadow-sm d-flex align-items-center px-2 text-white small"
+               style="left:{{ row.pct_offset }}%; width:{{ row.pct_width }}%; height:28px; top:0; min-width:30px; background-color:
+                 {% if row.task.status == 'done' %}#198754
+                 {% elif row.task.status == 'in_progress' %}#0d6efd
+                 {% elif row.task.status == 'blocked' %}#dc3545
+                 {% elif row.task.status == 'todo' %}#ffc107; color:#212529
+                 {% else %}#6c757d{% endif %};">
+            <span class="text-truncate">{{ row.task.get_status_display }} · {{ row.duration_days }}d</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Date scale grid -->
+    <div class="mt-3 border-top pt-2">
+      <div class="d-flex small text-muted">
+        {% with step=total_days|divisibleby:4 %}
+        {% with step_days=total_days|floatformat:0 %}
+        <div class="flex-fill text-start">Day 1</div>
+        <div class="flex-fill text-center">Day {{ step_days|add:'-3'|default:step_days }}</div>
+        <div class="flex-fill text-center">Day {{ step_days|floatformat:0 }}</div>
+        <div class="flex-fill text-end">{{ timeline_end|date:"M d, Y" }}</div>
+        {% endwith %}
+        {% endwith %}
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-bar-chart-steps" style="font-size:2rem;"></i>
+      <p class="mt-2 mb-0">No tasks scheduled yet.</p>
+      <a href="{% url 'projects:add_task' project.pk %}" class="btn btn-sm btn-primary mt-2"><i class="bi bi-plus-lg"></i> Add first task</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i class="bi bi-list-task"></i> Task List</div>
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0 align-middle">
+      <thead><tr><th>Task</th><th>Start</th><th>End</th><th>Duration</th><th>Offset</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td><strong>{{ row.task.title }}</strong></td>
+          <td class="small">{{ row.start|date:"Y-m-d" }}</td>
+          <td class="small">{{ row.end|date:"Y-m-d" }}</td>
+          <td class="small">{{ row.duration_days }} day{{ row.duration_days|pluralize }}</td>
+          <td class="small text-muted">+{{ row.offset_days }}d</td>
+          <td>
+            {% if row.task.status == 'done' %}<span class="badge bg-success">{{ row.task.get_status_display }}</span>
+            {% elif row.task.status == 'in_progress' %}<span class="badge bg-primary">{{ row.task.get_status_display }}</span>
+            {% elif row.task.status == 'blocked' %}<span class="badge bg-danger">{{ row.task.get_status_display }}</span>
+            {% elif row.task.status == 'todo' %}<span class="badge bg-warning text-dark">{{ row.task.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ row.task.get_status_display }}</span>{% endif %}
+          </td>
+          <td class="text-end"><a href="{% url 'projects:detail' project.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-3">No tasks.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'projects:detail' project.pk %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to project</a>
+</div>
+{% endblock %}

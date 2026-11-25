@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Subscriptions – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-credit-card text-primary"></i> Subscriptions</h3>
+  <a href="{% url 'subscriptions:subscription_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Subscription</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Plan</th>
+            <th>Billing Cycle</th>
+            <th>Status</th>
+            <th>Current Period Ends</th>
+            <th class="text-center">Auto Renew</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in items %}
+          <tr>
+            <td><strong>{{ s.company.name }}</strong></td>
+            <td>{{ s.plan.name }}</td>
+            <td><span class="badge bg-secondary">{{ s.get_billing_cycle_display }}</span></td>
+            <td>
+              {% if s.status == 'active' %}<span class="badge bg-success">{{ s.get_status_display }}</span>
+              {% elif s.status == 'trial' %}<span class="badge bg-warning text-dark">{{ s.get_status_display }}</span>
+              {% elif s.status == 'past_due' %}<span class="badge bg-danger">{{ s.get_status_display }}</span>
+              {% elif s.status == 'expired' %}<span class="badge bg-danger">{{ s.get_status_display }}</span>
+              {% elif s.status == 'cancelled' %}<span class="badge bg-danger">{{ s.get_status_display }}</span>
+              {% else %}<span class="badge bg-secondary">{{ s.get_status_display }}</span>{% endif %}
+            </td>
+            <td class="small">{{ s.current_period_end|date:"Y-m-d"|default:"-" }}</td>
+            <td class="text-center">
+              {% if s.auto_renew %}<i class="bi bi-arrow-repeat text-success" title="Auto-renew"></i>
+              {% else %}<i class="bi bi-x-circle text-muted" title="No auto-renew"></i>{% endif %}
+            </td>
+            <td><a href="{% url 'subscriptions:subscription_detail' s.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No subscriptions yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'subscriptions:plan_list' %}" class="btn btn-outline-primary"><i class="bi bi-tags"></i> Plans</a>
+  <a href="{% url 'subscriptions:usage_report' %}" class="btn btn-outline-secondary"><i class="bi bi-bar-chart"></i> Usage Report</a>
+</div>
+{% endblock %}

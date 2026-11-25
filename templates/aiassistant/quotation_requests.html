@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}AI Quotation Requests – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-magic text-primary"></i> AI Quotation Requests</h3>
+  <a href="{% url 'aiassistant:quotation_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New AI Quotation</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Service</th>
+            <th class="text-end">Area</th>
+            <th class="text-end">Suggested ₹</th>
+            <th class="text-center" style="width:140px;">Confidence</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in items %}
+          <tr>
+            <td><strong>#{{ r.pk }}</strong></td>
+            <td>{% if r.customer %}{{ r.customer.name }}{% else %}-{% endif %}</td>
+            <td class="small">{{ r.service_required|default:"-"|truncatechars:30 }}</td>
+            <td class="text-end small">{{ r.total_area|floatformat:0|intcomma }} sq ft</td>
+            <td class="text-end"><strong>₹{{ r.suggested_amount|floatformat:0|intcomma }}</strong></td>
+            <td>
+              <div class="progress" style="height:18px;">
+                <div class="progress-bar bg-{% if r.confidence_score >= 80 %}success{% elif r.confidence_score >= 50 %}primary{% else %}warning{% endif %}" style="width:{{ r.confidence_score|floatformat:0 }}%;">{{ r.confidence_score|floatformat:0 }}%</div>
+              </div>
+            </td>
+            <td>
+              {% if r.status == 'approved' %}<span class="badge bg-success">{{ r.get_status_display }}</span>
+              {% elif r.status == 'generated' %}<span class="badge bg-primary">{{ r.get_status_display }}</span>
+              {% elif r.status == 'rejected' %}<span class="badge bg-danger">{{ r.get_status_display }}</span>
+              {% elif r.status == 'pending' %}<span class="badge bg-warning text-dark">{{ r.get_status_display }}</span>
+              {% else %}<span class="badge bg-secondary">{{ r.get_status_display }}</span>{% endif %}
+            </td>
+            <td class="small">{{ r.created_at|date:"Y-m-d H:i" }}</td>
+            <td class="text-end">
+              {% if r.status == 'generated' %}
+              <a href="{% url 'aiassistant:ai_quotation_approve' r.pk %}" class="btn btn-sm btn-success"><i class="bi bi-check2-circle"></i> Review</a>
+              {% elif r.status == 'pending' %}
+              <a href="{% url 'aiassistant:ai_quotation_generate' r.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-magic"></i> Generate</a>
+              {% elif r.status == 'approved' and r.generated_quotation %}
+              <a href="{% url 'estimation:detail' r.generated_quotation.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View Quote</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" class="text-center text-muted py-4">No AI quotation requests yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'aiassistant:dashboard' %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to AI Dashboard</a>
+</div>
+{% endblock %}

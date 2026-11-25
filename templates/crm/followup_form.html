@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Log Follow-up – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-telephone"></i> {{ title }}</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Follow-up</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Worker Dashboard – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-speedometer2 text-primary"></i> Worker Dashboard</h3>
+    <div class="text-muted small">Hello, {{ request.user.display_name }}. Here's your work for today.</div>
+  </div>
+  <a href="{% url 'projects:my_tasks' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-list-task"></i> All My Tasks</a>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card h-100 stat-card p-3">
+      <div class="stat-label">Today's Attendance</div>
+      {% if today_attendance %}
+        {% if today_attendance.status == 'present' %}
+          <div class="stat-value text-success"><i class="bi bi-check-circle-fill"></i> Present</div>
+          <div class="text-muted small mt-1">
+            <i class="bi bi-clock"></i> In: {{ today_attendance.check_in|time:"H:i"|default:"—" }}
+            · Out: {{ today_attendance.check_out|time:"H:i"|default:"—" }}
+          </div>
+          <div class="text-muted small">Hours worked: {{ today_attendance.hours_worked }}</div>
+        {% elif today_attendance.status == 'half_day' %}
+          <div class="stat-value text-warning"><i class="bi bi-dash-circle-fill"></i> Half Day</div>
+          <div class="text-muted small mt-1">Hours worked: {{ today_attendance.hours_worked }}</div>
+        {% elif today_attendance.status == 'absent' %}
+          <div class="stat-value text-danger"><i class="bi bi-x-circle-fill"></i> Absent</div>
+          <div class="text-muted small mt-1">Marked absent today</div>
+        {% else %}
+          <div class="stat-value text-secondary"><i class="bi bi-cup-hot-fill"></i> On Leave</div>
+          <div class="text-muted small mt-1">{{ today_attendance.notes|default:"Approved leave" }}</div>
+        {% endif %}
+      {% else %}
+        <div class="stat-value text-secondary"><i class="bi bi-question-circle"></i> Not Marked</div>
+        <div class="text-muted small mt-1">Attendance for today not yet recorded.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 p-3">
+      <div class="stat-label">Open Tasks</div>
+      <div class="stat-value text-primary">{{ my_tasks|length }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-list-task"></i> Assigned to you</div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    {% if worker_profile %}
+    <div class="card h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="stat-label">My Profile</div>
+        <span class="badge {% if worker_profile.is_active %}bg-success{% else %}bg-secondary{% endif %} badge-status">{% if worker_profile.is_active %}Active{% else %}Inactive{% endif %}</span>
+      </div>
+      <div class="fw-semibold">{{ worker_profile.name }}</div>
+      <div class="text-muted small">{{ worker_profile.get_worker_type_display }}</div>
+      <div class="mt-2 small">
+        <div><i class="bi bi-telephone"></i> {{ worker_profile.phone|default:"—" }}</div>
+        <div><i class="bi bi-cash-coin"></i> {{ worker_profile.get_payment_mode_display }} · ₹{{ worker_profile.wage_rate|intcomma }}</div>
+        {% if worker_profile.skills %}<div><i class="bi bi-stars"></i> {{ worker_profile.skills }}</div>{% endif %}
+        {% if worker_profile.city %}<div><i class="bi bi-geo-alt"></i> {{ worker_profile.city }}</div>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card h-100 p-3 text-center">
+      <i class="bi bi-person-badge text-muted" style="font-size:2rem;"></i>
+      <div class="fw-semibold mt-2">Worker profile not linked</div>
+      <div class="text-muted small">Please contact the admin to link your worker profile.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-task"></i> My Tasks</span>
+    <a href="{% url 'projects:my_tasks' %}" class="small">View all</a>
+  </div>
+  <div class="card-body p-0">
+    {% if my_tasks %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+          <thead>
+            <tr><th>Task</th><th>Project</th><th>Room</th><th>Status</th><th>Due Date</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for task in my_tasks %}
+              <tr>
+                <td class="fw-semibold">{{ task.title|truncatechars:35 }}</td>
+                <td>
+                  <a href="{% url 'projects:detail' pk=task.project_id %}" class="text-decoration-none">{{ task.project.project_number }}</a>
+                  <div class="text-muted small">{{ task.project.title|truncatechars:30 }}</div>
+                </td>
+                <td>{{ task.room|default:"—" }}</td>
+                <td>
+                  {% if task.status == 'done' %}<span class="badge bg-success badge-status">{{ task.get_status_display }}</span>
+                  {% elif task.status == 'in_progress' %}<span class="badge bg-primary badge-status">{{ task.get_status_display }}</span>
+                  {% elif task.status == 'blocked' %}<span class="badge bg-danger badge-status">{{ task.get_status_display }}</span>
+                  {% else %}<span class="badge bg-warning text-dark badge-status">{{ task.get_status_display }}</span>{% endif %}
+                </td>
+                <td>{{ task.due_date|default:"—" }}</td>
+                <td class="text-end"><a href="{% url 'projects:detail' pk=task.project_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-right"></i></a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+        <h6 class="mt-3">No tasks assigned to you yet</h6>
+        <div class="small">When a project manager assigns you a task, it will appear here.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

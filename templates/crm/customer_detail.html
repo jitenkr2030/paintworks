@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ customer.name }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-person text-primary"></i> {{ customer.name }}</h3>
+    <span class="badge bg-info">{{ customer.get_customer_type_display }}</span>
+    {% if customer.company_name %}<span class="text-muted ms-2">{{ customer.company_name }}</span>{% endif %}
+  </div>
+  <div>
+    <a href="{% url 'crm:customer_edit' customer.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+    <a href="{% url 'crm:property_create' customer.pk %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Property</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Contact</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width:90px;">Phone</th><td>{{ customer.phone }}</td></tr>
+          <tr><th>Alt</th><td>{{ customer.alt_phone|default:"-" }}</td></tr>
+          <tr><th>Email</th><td>{{ customer.email|default:"-" }}</td></tr>
+          {% if customer.gstin %}<tr><th>GSTIN</th><td>{{ customer.gstin }}</td></tr>{% endif %}
+          <tr><th>City</th><td>{{ customer.city|default:"-" }}</td></tr>
+          <tr><th>Address</th><td>{{ customer.address|default:"-" }}</td></tr>
+          <tr><th>Source</th><td>{{ customer.source|default:"-" }}</td></tr>
+          <tr><th>Rating</th><td>{% if customer.rating %}{{ customer.rating|floatformat }}/5{% else %}-{% endif %}</td></tr>
+          <tr><th>Joined</th><td>{{ customer.created_at|date:"Y-m-d" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-building"></i> Properties</div>
+      <div class="list-group list-group-flush">
+        {% for p in customer.properties.all %}
+          <div class="list-group-item">
+            <strong>{{ p.label }}</strong> <span class="badge bg-secondary">{{ p.get_property_type_display }}</span>
+            <div class="text-muted small">{{ p.address }}</div>
+            <div class="text-muted small">{{ p.built_up_area }} sq ft · {{ p.bedrooms }}BHK · {{ p.bathrooms }} baths</div>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">No properties added.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-graph-up"></i> Summary</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2"><span>Bookings</span><strong>{{ customer.bookings.count }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span>Quotations</span><strong>{{ customer.quotations.count }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span>Projects</span><strong>{{ customer.projects.count }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span>Invoices</span><strong>{{ customer.invoices.count }}</strong></div>
+        <hr>
+        <div class="d-flex justify-content-between"><span>Total Business</span><strong class="text-success">₹{{ customer.total_business|intcomma }}</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-file-earmark-text"></i> Recent Quotations</div>
+      <div class="list-group list-group-flush">
+        {% for q in customer.quotations.all %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'estimation:detail' q.pk %}">{{ q.quote_number }}</a>
+            <span class="badge bg-{% if q.status == 'approved' %}success{% elif q.status == 'rejected' %}danger{% elif q.status == 'sent' %}primary{% else %}warning{% endif %}">{{ q.get_status_display }}</span>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">No quotations yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-diagram-3"></i> Recent Projects</div>
+      <div class="list-group list-group-flush">
+        {% for p in customer.projects.all %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{% url 'projects:detail' p.pk %}">{{ p.project_number }} – {{ p.title|truncatechars:40 }}</a>
+            <span class="badge bg-{% if p.status == 'completed' %}success{% elif p.status == 'in_progress' %}primary{% elif p.status == 'planned' %}warning{% else %}secondary{% endif %}">{{ p.get_status_display }}</span>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">No projects yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}KPI Dashboard – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-speedometer text-primary"></i> Executive KPI Dashboard</h3>
+  <span class="text-muted small">V3: Advanced Business Intelligence</span>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Revenue MTD</div>
+      <div class="stat-value text-success">₹{{ revenue_mtd|intcomma }}</div>
+      <div class="text-muted small mt-1">
+        {% if revenue_growth >= 0 %}<i class="bi bi-arrow-up text-success"></i>{% else %}<i class="bi bi-arrow-down text-danger"></i>{% endif %}
+        {{ revenue_growth }}% vs last month
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card warning p-3">
+      <div class="stat-label">Active Projects</div>
+      <div class="stat-value">{{ projects_active }}</div>
+      <div class="text-muted small mt-1">{{ projects_completed }} completed</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card p-3">
+      <div class="stat-label">On-Time Rate</div>
+      <div class="stat-value">{{ on_time_rate }}%</div>
+      <div class="text-muted small mt-1">{{ projects_delayed }} delayed projects</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card stat-card danger p-3">
+      <div class="stat-label">Outstanding</div>
+      <div class="stat-value text-danger">₹{{ outstanding|intcomma }}</div>
+      <div class="text-muted small mt-1">Customer dues</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-graph-up"></i> Revenue &amp; Growth</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th>Revenue (MTD)</th><td class="text-end">₹{{ revenue_mtd|intcomma }}</td></tr>
+          <tr><th>Last Month</th><td class="text-end">–</td></tr>
+          <tr><th>Growth</th><td class="text-end"><span class="badge bg-{% if revenue_growth >= 0 %}success{% else %}danger{% endif %}">{{ revenue_growth }}%</span></td></tr>
+          <tr><th>Avg Project Value</th><td class="text-end">₹{{ avg_project_value|intcomma }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-people"></i> Customer Metrics</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th>New (MTD)</th><td class="text-end">{{ new_customers_mtd }}</td></tr>
+          <tr><th>Total Customers</th><td class="text-end">{{ total_customers }}</td></tr>
+          <tr><th>Repeat Customers</th><td class="text-end">–</td></tr>
+          <tr><th>Retention Rate</th><td class="text-end">{{ customer_retention }}%</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-hammer"></i> Project Metrics</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th>Active</th><td class="text-end">{{ projects_active }}</td></tr>
+          <tr><th>Completed</th><td class="text-end">{{ projects_completed }}</td></tr>
+          <tr><th>Delayed</th><td class="text-end">{{ projects_delayed }}</td></tr>
+          <tr><th>On-Time Rate</th><td class="text-end">{{ on_time_rate }}%</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-lightbulb"></i> Insights</div>
+      <div class="card-body">
+        <ul class="mb-0">
+          {% if revenue_growth > 0 %}
+            <li>Revenue is growing {{ revenue_growth }}% month-over-month — strong momentum.</li>
+          {% elif revenue_growth < 0 %}
+            <li>Revenue declined {{ revenue_growth|floatformat }}% — investigate pipeline.</li>
+          {% endif %}
+          {% if projects_delayed > 0 %}
+            <li>{{ projects_delayed }} project(s) are delayed. Consider resource rebalancing.</li>
+          {% endif %}
+          {% if customer_retention < 30 %}
+            <li>Customer retention at {{ customer_retention }}% — focus on after-sales service.</li>
+          {% endif %}
+          {% if outstanding > 100000 %}
+            <li>High outstanding of ₹{{ outstanding|intcomma }} — send payment reminders.</li>
+          {% endif %}
+          <li>{{ total_workers }} active workers on roll.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-link-45deg"></i> Quick Links</div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'analytics:trends_forecast' %}" class="btn btn-outline-primary"><i class="bi bi-graph-up-arrow"></i> Trends &amp; Forecast</a>
+          <a href="{% url 'analytics:service_popularity' %}" class="btn btn-outline-primary"><i class="bi bi-star"></i> Service Popularity</a>
+          <a href="{% url 'analytics:business_dashboard' %}" class="btn btn-outline-primary"><i class="bi bi-speedometer2"></i> Business Dashboard</a>
+          <a href="{% url 'analytics:financial_report' %}" class="btn btn-outline-primary"><i class="bi bi-cash-coin"></i> Financial Report</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

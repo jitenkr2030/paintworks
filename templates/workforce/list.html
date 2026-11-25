@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Workforce – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-person-badge text-primary"></i> Workforce</h3>
+  <div class="btn-group">
+    <a href="?export=xlsx" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+    <a href="{% url 'workforce:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Worker</a>
+  </div>
+</div>
+
+<form method="get" class="mb-3">
+  <div class="input-group" style="max-width:380px;">
+    <input type="text" name="q" value="{{ q|default:'' }}" class="form-control" placeholder="Search name, phone, skills...">
+    <button class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Phone</th><th>Skills</th><th class="text-end">Wage</th><th>Rating</th><th>Active</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for w in workers %}
+        <tr>
+          <td><a href="{% url 'workforce:detail' w.pk %}"><strong>{{ w.name }}</strong></a></td>
+          <td><span class="badge bg-info">{{ w.get_worker_type_display }}</span></td>
+          <td class="small">{{ w.phone|default:"-" }}</td>
+          <td class="small">{{ w.skills|default:"-" }}</td>
+          <td class="text-end">₹{{ w.daily_wage|floatformat:0|intcomma }}</td>
+          <td>{% if w.rating %}<span class="badge bg-warning text-dark">{{ w.rating|floatformat:1 }}</span>{% else %}-{% endif %}</td>
+          <td>{% if w.is_active %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+          <td><a href="{% url 'workforce:detail' w.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No workers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj %}
+{% include "common/_pagination.html" %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,217 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="description" content="Whitewash, Painting & Home Improvement Management Platform – manage customers, bookings, inspections, quotations, projects, workforce, inventory, billing and analytics.">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/favicon.svg' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PaintWorks">
+  <title>{% block title %}{{ PLATFORM_NAME }} – {{ PLATFORM_TAGLINE }}{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+{% if request.user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
+      <i class="bi bi-brush-fill"></i> {{ PLATFORM_NAME }}
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        {% if is_management %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'analytics:business_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-people"></i> CRM</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'crm:customer_list' %}">Customers</a></li>
+              <li><a class="dropdown-item" href="{% url 'crm:lead_list' %}">Leads Pipeline</a></li>
+              <li><a class="dropdown-item" href="{% url 'crm:customer_create' %}">Add Customer</a></li>
+              <li><a class="dropdown-item" href="{% url 'crm:lead_create' %}">New Lead</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-calendar-check"></i> Bookings</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'booking:list' %}">All Bookings</a></li>
+              <li><a class="dropdown-item" href="{% url 'booking:create' %}">New Booking</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-clipboard-data"></i> Inspection</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'inspection:list' %}">Inspections</a></li>
+              <li><a class="dropdown-item" href="{% url 'inspection:create' %}">Schedule Inspection</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-file-earmark-text"></i> Quotations</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'estimation:list' %}">All Quotations</a></li>
+              <li><a class="dropdown-item" href="{% url 'estimation:create' %}">New Quotation</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-diagram-3"></i> Projects</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'projects:list' %}">All Projects</a></li>
+              <li><a class="dropdown-item" href="{% url 'projects:create' %}">New Project</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-person-badge"></i> Workforce</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'workforce:list' %}">Workers</a></li>
+              <li><a class="dropdown-item" href="{% url 'workforce:attendance_list' %}">Attendance</a></li>
+              <li><a class="dropdown-item" href="{% url 'workforce:assignment_list' %}">Assignments</a></li>
+              <li><a class="dropdown-item" href="{% url 'workforce:payment_list' %}">Payments</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-boxes"></i> Inventory</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'inventory:material_list' %}">Materials</a></li>
+              <li><a class="dropdown-item" href="{% url 'inventory:supplier_list' %}">Suppliers</a></li>
+              <li><a class="dropdown-item" href="{% url 'inventory:po_list' %}">Purchase Orders</a></li>
+              <li><a class="dropdown-item" href="{% url 'inventory:material_issue_list' %}">Issues</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-cash-coin"></i> Billing</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'billing:invoice_list' %}">Invoices</a></li>
+              <li><a class="dropdown-item" href="{% url 'billing:expense_list' %}">Expenses</a></li>
+              <li><a class="dropdown-item" href="{% url 'billing:profitability' %}">Profitability</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-shield-check"></i> Quality</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'quality:qc_list' %}">QC Checklists</a></li>
+              <li><a class="dropdown-item" href="{% url 'quality:warranty_list' %}">Warranties</a></li>
+              <li><a class="dropdown-item" href="{% url 'quality:complaint_list' %}">Complaints</a></li>
+              <li><a class="dropdown-item" href="{% url 'quality:maintenance_list' %}">Maintenance</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-robot"></i> AI</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'aiassistant:dashboard' %}">AI Dashboard</a></li>
+              <li><a class="dropdown-item" href="{% url 'aiassistant:chat' %}">Customer Chatbot</a></li>
+              <li><a class="dropdown-item" href="{% url 'aiassistant:quotation_requests' %}">AI Quotation Requests</a></li>
+              <li><a class="dropdown-item" href="{% url 'aiassistant:quotation_create' %}">New AI Quotation</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-megaphone"></i> Notify</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'notifications:dashboard' %}">Notifications</a></li>
+              <li><a class="dropdown-item" href="{% url 'notifications:template_list' %}">Templates</a></li>
+              <li><a class="dropdown-item" href="{% url 'notifications:log_list' %}">Logs</a></li>
+              <li><a class="dropdown-item" href="{% url 'notifications:send' %}">Send Notification</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-credit-card"></i> SaaS</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'subscriptions:plan_list' %}">Plans</a></li>
+              <li><a class="dropdown-item" href="{% url 'subscriptions:subscription_list' %}">Subscriptions</a></li>
+              <li><a class="dropdown-item" href="{% url 'subscriptions:usage_report' %}">Usage Report</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="bi bi-bar-chart"></i> Reports</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'analytics:sales_report' %}">Sales</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:project_report' %}">Projects</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:customer_report' %}">Customers</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:worker_report' %}">Workers</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:material_report' %}">Materials</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:quotation_report' %}">Quotations</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:financial_report' %}">Financial</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:service_report' %}">Services</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:kpi_dashboard' %}"><i class="bi bi-speedometer"></i> KPI Dashboard</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:trends_forecast' %}"><i class="bi bi-graph-up-arrow"></i> Trends &amp; Forecast</a></li>
+              <li><a class="dropdown-item" href="{% url 'analytics:service_popularity' %}"><i class="bi bi-star"></i> Service Popularity</a></li>
+            </ul>
+          </li>
+        {% elif current_role == 'project_manager' %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'analytics:pm_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'projects:list' %}"><i class="bi bi-diagram-3"></i> Projects</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'inspection:list' %}"><i class="bi bi-clipboard-data"></i> Inspections</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'workforce:list' %}"><i class="bi bi-person-badge"></i> Workforce</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'inventory:material_issue_list' %}"><i class="bi bi-boxes"></i> Material Issues</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'quality:qc_list' %}"><i class="bi bi-shield-check"></i> Quality</a></li>
+        {% elif current_role == 'worker' %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'analytics:worker_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'projects:my_tasks' %}"><i class="bi bi-list-task"></i> My Tasks</a></li>
+        {% elif current_role == 'customer' %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'analytics:customer_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'booking:customer_create' %}"><i class="bi bi-calendar-plus"></i> Book Service</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'booking:list' %}"><i class="bi bi-calendar-check"></i> My Bookings</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'billing:my_invoices' %}"><i class="bi bi-file-earmark-text"></i> My Invoices</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'services:catalogue' %}"><i class="bi bi-grid"></i> Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'aiassistant:chat' %}"><i class="bi bi-robot"></i> AI Assistant</a></li>
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
+            <i class="bi bi-person-circle"></i> {{ request.user.display_name }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">View Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:profile_edit' %}"><i class="bi bi-pencil"></i> Edit Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'services:catalogue' %}">Service Catalogue</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<div class="container-fluid py-3 {% if request.user.is_authenticated %}app-body{% else %}public-body{% endif %}">
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }} alert-dismissible fade show">
+        {{ m }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+
+<footer class="text-center text-muted small py-3 border-top">
+  {{ PLATFORM_NAME }} · {{ PLATFORM_TAGLINE }}
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('{% static "sw.js" %}').catch(function(){});
+  });
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

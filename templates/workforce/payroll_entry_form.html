@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ title }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-person-badge text-primary"></i> {{ title }}</h3>
+  <a href="{% url 'workforce:payroll_cycle_detail' entry.cycle.pk %}" class="btn btn-link">Cancel</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-pencil-square"></i> Edit Payroll Entry</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors|join:" " }}</div>{% endif %}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save</button>
+          <a href="{% url 'workforce:payroll_cycle_detail' entry.cycle.pk %}" class="btn btn-link">Cancel</a>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header bg-light"><i class="bi bi-info-circle"></i> Entry Summary</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width:140px;">Worker</th><td>{{ entry.worker.name }}</td></tr>
+          <tr><th>Cycle</th><td>{{ entry.cycle.name }}</td></tr>
+          <tr><th>Net Payable</th><td><strong class="text-success">₹{{ entry.net_payable|floatformat:2|intcomma }}</strong></td></tr>
+          <tr><th>Paid Status</th><td>
+            {% if entry.is_paid %}<span class="badge bg-success">Paid {{ entry.paid_on|date:"Y-m-d" }}</span>
+            {% else %}<span class="badge bg-warning text-dark">Unpaid</span>{% endif %}
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

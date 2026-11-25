@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Customer Report – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h3 class="mb-0"><i class="bi bi-bar-chart text-primary"></i> Customer Report</h3>
+  <div class="text-muted small">Showing {{ rows|length }} customer{{ rows|length|pluralize }}</div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-people"></i> Customer-wise Business Summary</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Type</th>
+            <th>Phone</th>
+            <th class="text-center">Bookings</th>
+            <th class="text-center">Quotations</th>
+            <th class="text-center">Projects</th>
+            <th class="text-end">Total Business</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td class="text-muted">{{ forloop.counter }}</td>
+              <td>
+                <a href="{% url 'crm:customer_detail' pk=row.customer.pk %}" class="text-decoration-none fw-semibold">{{ row.customer.name }}</a>
+                {% if row.customer.company_name %}<div class="text-muted small">{{ row.customer.company_name }}</div>{% endif %}
+              </td>
+              <td><span class="badge bg-secondary badge-status">{{ row.customer.get_customer_type_display }}</span></td>
+              <td>{{ row.customer.phone|default:"—" }}</td>
+              <td class="text-center">
+                {% if row.bookings %}<span class="badge bg-primary">{{ row.bookings }}</span>{% else %}<span class="text-muted">0</span>{% endif %}
+              </td>
+              <td class="text-center">
+                {% if row.quotations %}<span class="badge bg-primary">{{ row.quotations }}</span>{% else %}<span class="text-muted">0</span>{% endif %}
+              </td>
+              <td class="text-center">
+                {% if row.projects %}<span class="badge bg-success">{{ row.projects }}</span>{% else %}<span class="text-muted">0</span>{% endif %}
+              </td>
+              <td class="text-end fw-semibold text-success">₹{{ row.total_business|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.6rem;"></i><div class="mt-2">No customers found.</div></td></tr>
+          {% endfor %}
+        </tbody>
+        {% if rows %}
+        <tfoot>
+          {% with total_bookings=0 total_quotes=0 total_projects=0 %}
+            <tr class="table-light fw-semibold">
+              <td colspan="4" class="text-end">Total Customers</td>
+              <td class="text-center">{{ rows|length }}</td>
+              <td class="text-center">—</td>
+              <td class="text-center">—</td>
+              <td class="text-end text-success">See customer records</td>
+            </tr>
+          {% endwith %}
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

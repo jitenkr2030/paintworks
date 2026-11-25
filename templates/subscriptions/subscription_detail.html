@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ sub.company.name }} Subscription – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-credit-card text-primary"></i> {{ sub.company.name }}</h3>
+    <span class="text-muted small">{{ sub.plan.name }} · {{ sub.get_billing_cycle_display }}</span>
+  </div>
+  <div>
+    <form method="post" action="{% url 'subscriptions:invoice_create' sub.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-primary"><i class="bi bi-receipt"></i> Generate Invoice</button>
+    </form>
+    <form method="post" action="{% url 'subscriptions:subscription_cancel' sub.pk %}" class="d-inline" onsubmit="return confirm('Cancel this subscription? Auto-renew will be disabled.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Cancel</button>
+    </form>
+    <a href="{% url 'subscriptions:subscription_list' %}" class="btn btn-link">Back</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Subscription Info</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width:140px;">Company</th><td>{{ sub.company.name }}</td></tr>
+          <tr><th>Plan</th><td>{{ sub.plan.name }}</td></tr>
+          <tr><th>Status</th><td>
+            {% if sub.status == 'active' %}<span class="badge bg-success">{{ sub.get_status_display }}</span>
+            {% elif sub.status == 'trial' %}<span class="badge bg-warning text-dark">{{ sub.get_status_display }}</span>
+            {% elif sub.status == 'past_due' %}<span class="badge bg-danger">{{ sub.get_status_display }}</span>
+            {% elif sub.status == 'expired' %}<span class="badge bg-danger">{{ sub.get_status_display }}</span>
+            {% elif sub.status == 'cancelled' %}<span class="badge bg-danger">{{ sub.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ sub.get_status_display }}</span>{% endif %}
+          </td></tr>
+          <tr><th>Billing Cycle</th><td>{{ sub.get_billing_cycle_display }}</td></tr>
+          <tr><th>Started</th><td>{{ sub.started_at|date:"Y-m-d" }}</td></tr>
+          <tr><th>Period Start</th><td>{{ sub.current_period_start|date:"Y-m-d" }}</td></tr>
+          <tr><th>Period End</th><td>{{ sub.current_period_end|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>Trial Ends</th><td>{{ sub.trial_ends_at|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>Auto Renew</th><td>
+            {% if sub.auto_renew %}<span class="badge bg-success"><i class="bi bi-arrow-repeat"></i> On</span>
+            {% else %}<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Off</span>{% endif %}
+          </td></tr>
+          {% if sub.cancelled_at %}<tr><th>Cancelled At</th><td>{{ sub.cancelled_at|date:"Y-m-d H:i" }}</td></tr>{% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-tags"></i> Plan Limits</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr><th>Monthly Price</th><td class="text-end">₹{{ sub.plan.monthly_price|floatformat:0|intcomma }}</td></tr>
+          <tr><th>Annual Price</th><td class="text-end">₹{{ sub.plan.annual_price|floatformat:0|intcomma }}</td></tr>
+          <tr><th>Max Users</th><td class="text-end">{{ sub.plan.max_users }}</td></tr>
+          <tr><th>Max Branches</th><td class="text-end">{{ sub.plan.max_branches }}</td></tr>
+          <tr><th>Max Projects / Month</th><td class="text-end">{{ sub.plan.max_projects_per_month }}</td></tr>
+        </table>
+        {% if sub.notes %}<div class="alert alert-light border small mt-2 mb-0"><strong>Notes:</strong> {{ sub.notes }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i class="bi bi-receipt"></i> Invoices</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Period</th>
+            <th class="text-end">Amount</th>
+            <th class="text-end">Grand Total</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td><strong>{{ inv.invoice_number }}</strong></td>
+            <td class="small">{{ inv.period_start|date:"Y-m-d" }} → {{ inv.period_end|date:"Y-m-d" }}</td>
+            <td class="text-end">₹{{ inv.amount|floatformat:2|intcomma }}</td>
+            <td class="text-end"><strong>₹{{ inv.grand_total|floatformat:2|intcomma }}</strong></td>
+            <td>
+              {% if inv.status == 'paid' %}<span class="badge bg-success">{{ inv.get_status_display }}</span>
+              {% elif inv.status == 'sent' %}<span class="badge bg-primary">{{ inv.get_status_display }}</span>
+              {% elif inv.status == 'failed' %}<span class="badge bg-danger">{{ inv.get_status_display }}</span>
+              {% elif inv.status == 'draft' or inv.status == 'pending' %}<span class="badge bg-warning text-dark">{{ inv.get_status_display }}</span>
+              {% elif inv.status == 'void' %}<span class="badge bg-secondary">{{ inv.get_status_display }}</span>
+              {% else %}<span class="badge bg-secondary">{{ inv.get_status_display }}</span>{% endif %}
+              {% if inv.paid_at %}<div class="text-muted small">Paid {{ inv.paid_at|date:"Y-m-d" }}</div>{% endif %}
+            </td>
+            <td class="text-end">
+              {% if inv.status != 'paid' and inv.status != 'void' %}
+              <button type="button" class="btn btn-sm btn-success" data-bs-toggle="collapse" data-bs-target="#pay-form-{{ inv.pk }}"><i class="bi bi-cash"></i> Mark Paid</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% if inv.status != 'paid' and inv.status != 'void' %}
+          <tr class="collapse" id="pay-form-{{ inv.pk }}">
+            <td colspan="6" class="bg-light">
+              <form method="post" action="{% url 'subscriptions:invoice_mark_paid' sub.pk inv.pk %}" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <div class="col-md-4">
+                  <label class="form-label small">Payment Method</label>
+                  <select name="method" class="form-select form-select-sm">
+                    <option value="upi">UPI</option>
+                    <option value="card">Card</option>
+                    <option value="bank">Bank Transfer</option>
+                  </select>
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label small">Reference</label>
+                  <input type="text" name="reference" class="form-control form-control-sm" placeholder="Transaction / Cheque #">
+                </div>
+                <div class="col-md-3">
+                  <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-check-lg"></i> Confirm Payment</button>
+                </div>
+              </form>
+            </td>
+          </tr>
+          {% endif %}
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No invoices yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i class="bi bi-bar-chart"></i> Feature Usage</div>
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0 align-middle">
+      <thead><tr><th>Feature</th><th class="text-end">Used</th><th class="text-end">Limit</th><th style="width:200px;">Usage</th><th></th></tr></thead>
+      <tbody>
+        {% for u in usage %}
+        <tr class="{% if u.exceeds_limit %}table-danger{% endif %}">
+          <td><strong>{{ u.feature|title }}</strong>
+            <div class="text-muted small">{{ u.period_start|date:"Y-m-d" }} → {{ u.period_end|date:"Y-m-d" }}</div>
+          </td>
+          <td class="text-end">{{ u.used }}</td>
+          <td class="text-end">{{ u.limit|default:"∞" }}</td>
+          <td>
+            {% if u.limit %}
+            <div class="progress" style="height:18px;">
+              <div class="progress-bar bg-{% if u.exceeds_limit %}danger{% elif u.used|floatformat:0 > u.limit|floatformat:0|add:'-1'|floatformat:0 %}warning{% else %}success{% endif %}" style="width:{% widthratio u.used u.limit 100 %}%;">{% widthratio u.used u.limit 100 %}%</div>
+            </div>
+            {% else %}
+            <span class="text-muted small">Unlimited</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.exceeds_limit %}<span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Exceeds Limit</span>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No usage records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'subscriptions:subscription_list' %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to list</a>
+</div>
+{% endblock %}

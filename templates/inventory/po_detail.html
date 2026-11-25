@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ po.po_number }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-cart text-primary"></i> {{ po.po_number }}</h3>
+    <span class="text-muted small">{{ po.order_date|date:"Y-m-d" }}</span>
+  </div>
+  <div>
+    <a href="{% url 'inventory:po_add_line' po.pk %}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Add Line</a>
+    <a href="{% url 'inventory:po_list' %}" class="btn btn-link">Back</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle"></i> PO Info</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width:110px;">PO #</th><td>{{ po.po_number }}</td></tr>
+          <tr><th>Supplier</th><td>{% if po.supplier %}<strong>{{ po.supplier.name }}</strong>{% else %}-{% endif %}</td></tr>
+          <tr><th>Order Date</th><td>{{ po.order_date|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>Expected</th><td>{{ po.expected_date|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>Status</th><td>
+            {% if po.status == 'received' or po.status == 'approved' %}<span class="badge bg-success">{{ po.get_status_display }}</span>
+            {% elif po.status == 'sent' %}<span class="badge bg-primary">{{ po.get_status_display }}</span>
+            {% elif po.status == 'cancelled' or po.status == 'rejected' %}<span class="badge bg-danger">{{ po.get_status_display }}</span>
+            {% elif po.status == 'draft' or po.status == 'pending' %}<span class="badge bg-warning text-dark">{{ po.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ po.get_status_display }}</span>{% endif %}
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-cash-coin"></i> Total</div>
+      <div class="card-body text-center">
+        <div class="text-muted small">PO Total</div>
+        <h2 class="mb-0 text-success">₹{{ po.total|floatformat:2|intcomma }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-ul"></i> Line Items</span>
+    <a href="{% url 'inventory:po_add_line' po.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i> Add Line</a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr><th>Material</th><th>Qty</th><th>Unit</th><th class="text-end">Rate</th><th class="text-end">Amount</th></tr>
+      </thead>
+      <tbody>
+        {% for line in po.lines.all %}
+        <tr>
+          <td>{{ line.material.name }}</td>
+          <td>{{ line.quantity|floatformat:2 }}</td>
+          <td>{{ line.unit|default:"-" }}</td>
+          <td class="text-end">₹{{ line.rate|floatformat:2|intcomma }}</td>
+          <td class="text-end">₹{{ line.amount|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-3">No line items.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

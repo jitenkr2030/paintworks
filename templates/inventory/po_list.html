@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Purchase Orders – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-cart text-primary"></i> Purchase Orders</h3>
+  <a href="{% url 'inventory:po_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New PO</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>PO #</th><th>Supplier</th><th>Date</th><th>Status</th><th class="text-end">Total</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for po in pos %}
+        <tr>
+          <td><a href="{% url 'inventory:po_detail' po.pk %}"><strong>{{ po.po_number }}</strong></a></td>
+          <td class="small">{% if po.supplier %}{{ po.supplier.name }}{% else %}-{% endif %}</td>
+          <td class="small">{{ po.order_date|date:"Y-m-d"|default:"-" }}</td>
+          <td>
+            {% if po.status == 'received' or po.status == 'approved' %}<span class="badge bg-success">{{ po.get_status_display }}</span>
+            {% elif po.status == 'sent' %}<span class="badge bg-primary">{{ po.get_status_display }}</span>
+            {% elif po.status == 'cancelled' or po.status == 'rejected' %}<span class="badge bg-danger">{{ po.get_status_display }}</span>
+            {% elif po.status == 'draft' or po.status == 'pending' %}<span class="badge bg-warning text-dark">{{ po.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ po.get_status_display }}</span>{% endif %}
+          </td>
+          <td class="text-end">₹{{ po.total|floatformat:2|intcomma }}</td>
+          <td><a href="{% url 'inventory:po_detail' po.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No purchase orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

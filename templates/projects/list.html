@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Projects – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-diagram-3 text-primary"></i> Projects</h3>
+  <div class="btn-group">
+    <a href="?export=xlsx" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Project</a>
+  </div>
+</div>
+
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a href="{% url 'projects:list' %}" class="badge rounded-pill {% if not current_status %}bg-primary{% else %}bg-light text-dark border{% endif %} text-decoration-none">All</a>
+  {% for s in statuses %}
+  <a href="?status={{ s }}" class="badge rounded-pill {% if current_status == s %}bg-primary{% else %}bg-light text-dark border{% endif %} text-decoration-none">{{ s|title }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr><th>Project #</th><th>Title</th><th>Customer</th><th>Manager</th><th>Status</th><th style="width:160px;">Progress</th><th>Start</th><th>End</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        <tr>
+          <td><a href="{% url 'projects:detail' p.pk %}"><strong>{{ p.project_number }}</strong></a></td>
+          <td>{{ p.title|truncatechars:40 }}</td>
+          <td class="small">{% if p.customer %}{{ p.customer.name }}{% else %}-{% endif %}</td>
+          <td class="small">{{ p.manager|default:"-" }}</td>
+          <td>
+            {% if p.status == 'completed' %}<span class="badge bg-success">{{ p.get_status_display }}</span>
+            {% elif p.status == 'in_progress' %}<span class="badge bg-primary">{{ p.get_status_display }}</span>
+            {% elif p.status == 'planned' %}<span class="badge bg-warning text-dark">{{ p.get_status_display }}</span>
+            {% elif p.status == 'cancelled' or p.status == 'on_hold' %}<span class="badge bg-danger">{{ p.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ p.get_status_display }}</span>{% endif %}
+          </td>
+          <td>
+            <div class="progress" style="height:18px;">
+              <div class="progress-bar bg-{% if p.progress >= 100 %}success{% elif p.progress >= 50 %}primary{% else %}warning{% endif %}" style="width:{{ p.progress|default:0 }}%;">{{ p.progress|default:0 }}%</div>
+            </div>
+          </td>
+          <td class="small">{{ p.start_date|date:"Y-m-d"|default:"-" }}</td>
+          <td class="small">{{ p.end_date|date:"Y-m-d"|default:"-" }}</td>
+          <td><a href="{% url 'projects:detail' p.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No projects yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj %}
+{% include "common/_pagination.html" %}
+{% endif %}
+{% endblock %}

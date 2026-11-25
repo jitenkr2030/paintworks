@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Assignments – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-diagram-3 text-primary"></i> Worker Assignments</h3>
+  <a href="{% url 'workforce:assignment_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Assignment</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Worker</th><th>Project</th><th>Role</th><th>From</th><th>To</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td>{% if a.worker %}<a href="{% url 'workforce:detail' a.worker.pk %}">{{ a.worker.name }}</a>{% else %}-{% endif %}</td>
+          <td>{% if a.project %}<a href="{% url 'projects:detail' a.project.pk %}">{{ a.project.project_number }}</a>{% else %}-{% endif %}</td>
+          <td class="small">{{ a.role|default:"-" }}</td>
+          <td class="small">{{ a.start_date|date:"Y-m-d"|default:"-" }}</td>
+          <td class="small">{{ a.end_date|date:"Y-m-d"|default:"-" }}</td>
+          <td><span class="badge bg-{% if a.status == 'completed' %}success{% elif a.status == 'in_progress' %}primary{% elif a.status == 'planned' %}warning text-dark{% else %}secondary{% endif %}">{{ a.get_status_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No assignments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

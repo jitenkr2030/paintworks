@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ cycle.name }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-cash-stack text-primary"></i> {{ cycle.name }}</h3>
+    <span class="text-muted small">{{ cycle.start_date|date:"Y-m-d" }} → {{ cycle.end_date|date:"Y-m-d" }} · {{ cycle.get_frequency_display }}</span>
+  </div>
+  <div>
+    {% if cycle.processed %}<span class="badge bg-success"><i class="bi bi-check2-circle"></i> Processed</span>
+    {% else %}<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Pending</span>{% endif %}
+    <a href="{% url 'workforce:payroll_cycle_list' %}" class="btn btn-link">Back</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Total Payable</div>
+      <div class="stat-value text-success">₹{{ total_payable|floatformat:2|intcomma }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-cash-coin"></i> Cycle net payable</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Entries</div>
+      <div class="stat-value">{{ entries|length }}</div>
+      <div class="text-muted small mt-1"><i class="bi bi-people"></i> Workers in cycle</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="stat-label">Paid</div>
+      <div class="stat-value">
+        {% with paid_count=entries|length %}
+          {{ paid_count }}
+        {% endwith %}
+      </div>
+      <div class="text-muted small mt-1"><i class="bi bi-check2-circle"></i> Processed entries</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-list-ul"></i> Payroll Entries</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle small">
+        <thead>
+          <tr>
+            <th>Worker</th>
+            <th class="text-end">Present</th>
+            <th class="text-end">Absent</th>
+            <th class="text-end">Leave</th>
+            <th class="text-end">OT hrs</th>
+            <th class="text-end">Base</th>
+            <th class="text-end">OT</th>
+            <th class="text-end">Bonus</th>
+            <th class="text-end">Deduct</th>
+            <th class="text-end">Net Payable</th>
+            <th>Paid</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+          <tr>
+            <td>
+              <a href="{% url 'workforce:detail' e.worker.pk %}"><strong>{{ e.worker.name }}</strong></a>
+              {% if e.notes %}<div class="text-muted small">{{ e.notes|truncatechars:40 }}</div>{% endif %}
+            </td>
+            <td class="text-end">{{ e.present_days }}</td>
+            <td class="text-end">{{ e.absent_days }}</td>
+            <td class="text-end">{{ e.leave_days }}</td>
+            <td class="text-end">{{ e.overtime_hours|floatformat:2 }}</td>
+            <td class="text-end">₹{{ e.base_amount|floatformat:0|intcomma }}</td>
+            <td class="text-end">₹{{ e.overtime_amount|floatformat:0|intcomma }}</td>
+            <td class="text-end text-success">₹{{ e.bonus|floatformat:0|intcomma }}</td>
+            <td class="text-end text-danger">₹{{ e.deductions|floatformat:0|intcomma }}</td>
+            <td class="text-end"><strong>₹{{ e.net_payable|floatformat:2|intcomma }}</strong></td>
+            <td>
+              {% if e.is_paid %}<span class="badge bg-success">Paid</span>
+                {% if e.paid_on %}<div class="text-muted small">{{ e.paid_on|date:"Y-m-d" }}</div>{% endif %}
+              {% else %}<span class="badge bg-warning text-dark">Unpaid</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'workforce:payroll_entry_edit' cycle.pk e.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+              {% if not e.is_paid %}
+              <form method="post" action="{% url 'workforce:payroll_process_payment' cycle.pk e.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-success" title="Mark Paid"><i class="bi bi-cash"></i> Mark Paid</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="12" class="text-center text-muted py-4">No payroll entries for this cycle.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="table-light">
+            <th colspan="9" class="text-end">Total Payable</th>
+            <th class="text-end text-success">₹{{ total_payable|floatformat:2|intcomma }}</th>
+            <th colspan="2"></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'workforce:payroll_cycle_list' %}" class="btn btn-link"><i class="bi bi-arrow-left"></i> Back to cycles</a>
+</div>
+{% endblock %}

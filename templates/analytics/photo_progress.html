@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Photo Progress – {{ project.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-camera text-primary"></i> Photo Progress Intelligence</h3>
+    <span class="text-muted small">{{ project.project_number }} – {{ project.title }}</span>
+  </div>
+  <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Project</a>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for label, photos, color in stages %}
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header bg-{{ color }} text-white">
+        <i class="bi bi-camera"></i> {{ label }} Stage
+        <span class="badge bg-light text-dark ms-2">{{ photos|length }}</span>
+      </div>
+      <div class="card-body">
+        {% if photos %}
+          <div class="row g-2">
+            {% for p in photos %}
+              <div class="col-6">
+                <img src="{{ p.image.url }}" class="img-fluid rounded" alt="{{ p.caption }}">
+                <div class="text-muted small mt-1">{{ p.uploaded_at|date:"Y-m-d" }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small mb-0">No photos in this stage yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-bar-chart"></i> Stage Distribution</div>
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col-md-4">
+        <div class="display-6 text-danger">{{ before_count }}</div>
+        <div class="text-muted small">Before Photos</div>
+      </div>
+      <div class="col-md-4">
+        <div class="display-6 text-warning">{{ during_count }}</div>
+        <div class="text-muted small">During Photos</div>
+      </div>
+      <div class="col-md-4">
+        <div class="display-6 text-success">{{ after_count }}</div>
+        <div class="text-muted small">After Photos</div>
+      </div>
+    </div>
+    <hr>
+    <div class="progress" style="height: 24px;">
+      <div class="progress-bar bg-danger" style="width: {% widthratio before_count 1 1 %}%">Before</div>
+      <div class="progress-bar bg-warning" style="width: {% widthratio during_count 1 1 %}%">During</div>
+      <div class="progress-bar bg-success" style="width: {% widthratio after_count 1 1 %}%">After</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-clock-history"></i> Photo Timeline</div>
+  <div class="card-body">
+    {% if all_photos %}
+      <div class="row g-3">
+        {% for p in all_photos %}
+          <div class="col-md-3 col-6">
+            <div class="card h-100">
+              <img src="{{ p.image.url }}" class="card-img-top" alt="{{ p.caption }}">
+              <div class="card-body p-2">
+                <span class="badge bg-{{ p.photo_type|default:'secondary' }}">{{ p.get_photo_type_display|default:p.photo_type }}</span>
+                <div class="text-muted small mt-1">{{ p.uploaded_at|date:"Y-m-d H:i" }}</div>
+                {% if p.caption %}<div class="small">{{ p.caption }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No photos uploaded yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="alert alert-info mt-3">
+  <i class="bi bi-info-circle"></i>
+  Upload "before" photos during inspection, "during" photos as work progresses, and "after" photos at completion to compare visual progress automatically.
+</div>
+{% endblock %}

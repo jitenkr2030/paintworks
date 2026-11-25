@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Project Manager Dashboard – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-speedometer2 text-primary"></i> Project Manager Dashboard</h3>
+    <div class="text-muted small">Manage active projects, tasks and timelines.</div>
+  </div>
+  <a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> New Project</a>
+</div>
+
+{% if delayed_projects %}
+<div class="card border-danger mb-3">
+  <div class="card-header bg-danger text-white"><i class="bi bi-exclamation-triangle-fill"></i> Delayed Projects ({{ delayed_projects|length }})</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle">
+        <thead>
+          <tr><th>Project</th><th>Customer</th><th>End Date</th><th>Progress</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for project in delayed_projects %}
+            <tr class="table-danger">
+              <td>
+                <a href="{% url 'projects:detail' pk=project.pk %}" class="fw-semibold text-decoration-none">{{ project.project_number }}</a>
+                <div class="text-muted small">{{ project.title|truncatechars:40 }}</div>
+              </td>
+              <td>{{ project.customer.name|truncatechars:25 }}</td>
+              <td><span class="badge bg-danger badge-status">{{ project.end_date|default:"—" }}</span></td>
+              <td style="min-width:140px;">
+                <div class="progress"><div class="progress-bar bg-danger" style="width: {{ project.progress_percent }}%"></div></div>
+                <div class="text-muted small mt-1">{{ project.progress_percent }}%</div>
+              </td>
+              <td class="text-end"><a href="{% url 'projects:detail' pk=project.pk %}" class="btn btn-sm btn-outline-danger">Open</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="mb-3">
+  <h5 class="mb-2"><i class="bi bi-hammer text-primary"></i> Active Projects ({{ active_projects|length }})</h5>
+  {% if active_projects %}
+    <div class="row g-3">
+      {% for project in active_projects %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 {% if project.is_delayed %}border-danger{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-diagram-3"></i> {{ project.project_number }}</span>
+              {% if project.is_delayed %}<span class="badge bg-danger badge-status">Delayed</span>{% else %}<span class="badge bg-primary badge-status">On Track</span>{% endif %}
+            </div>
+            <div class="card-body">
+              <h6 class="card-title mb-1">
+                <a href="{% url 'projects:detail' pk=project.pk %}" class="text-decoration-none">{{ project.title|truncatechars:45 }}</a>
+              </h6>
+              <div class="text-muted small mb-2">
+                <i class="bi bi-person"></i> {{ project.customer.name|truncatechars:30 }}
+              </div>
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">Progress</span>
+                <span class="fw-semibold">{{ project.progress_percent }}%</span>
+              </div>
+              <div class="progress mb-2">
+                <div class="progress-bar {% if project.is_delayed %}bg-danger{% else %}bg-primary{% endif %}" style="width: {{ project.progress_percent }}%"></div>
+              </div>
+              <div class="d-flex justify-content-between text-muted small">
+                <span><i class="bi bi-calendar3"></i> {{ project.start_date|default:"—" }}</span>
+                <span><i class="bi bi-calendar-x"></i> {{ project.end_date|default:"—" }}</span>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent d-flex justify-content-between">
+              <span class="text-muted small">₹{{ project.final_amount|intcomma }}</span>
+              <a href="{% url 'projects:detail' pk=project.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-right"></i> Open</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card"><div class="card-body text-muted text-center py-4"><i class="bi bi-inbox" style="font-size:1.8rem;"></i><div class="mt-2">No active projects assigned to you.</div></div></div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-list-task"></i> To Do Tasks ({{ todo_tasks|length }})</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead>
+              <tr><th>Task</th><th>Project</th><th>Due</th></tr>
+            </thead>
+            <tbody>
+              {% for task in todo_tasks %}
+                <tr>
+                  <td>
+                    <a href="{% url 'projects:detail' pk=task.project_id %}" class="text-decoration-none fw-semibold">{{ task.title|truncatechars:30 }}</a>
+                    {% if task.room %}<div class="text-muted small">{{ task.room }}</div>{% endif %}
+                  </td>
+                  <td><a href="{% url 'projects:detail' pk=task.project_id %}" class="text-muted text-decoration-none">{{ task.project.project_number }}</a></td>
+                  <td><span class="badge bg-warning text-dark badge-status">{{ task.due_date|default:"—" }}</span></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted text-center py-3">No pending tasks.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-hourglass-split"></i> In Progress Tasks ({{ in_progress_tasks|length }})</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead>
+              <tr><th>Task</th><th>Project</th><th>Due</th></tr>
+            </thead>
+            <tbody>
+              {% for task in in_progress_tasks %}
+                <tr>
+                  <td>
+                    <a href="{% url 'projects:detail' pk=task.project_id %}" class="text-decoration-none fw-semibold">{{ task.title|truncatechars:30 }}</a>
+                    {% if task.room %}<div class="text-muted small">{{ task.room }}</div>{% endif %}
+                  </td>
+                  <td><a href="{% url 'projects:detail' pk=task.project_id %}" class="text-muted text-decoration-none">{{ task.project.project_number }}</a></td>
+                  <td><span class="badge bg-primary badge-status">{{ task.due_date|default:"—" }}</span></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted text-center py-3">No tasks in progress.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-folder"></i> All My Projects ({{ all_my_projects|length }})</span>
+    <a href="{% url 'projects:list' %}" class="small">View all</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle">
+        <thead>
+          <tr><th>#</th><th>Title</th><th>Customer</th><th>Status</th><th>Start</th><th>End</th><th>Progress</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for project in all_my_projects %}
+            <tr>
+              <td><a href="{% url 'projects:detail' pk=project.pk %}" class="text-decoration-none fw-semibold">{{ project.project_number }}</a></td>
+              <td>{{ project.title|truncatechars:35 }}</td>
+              <td>{{ project.customer.name|truncatechars:25 }}</td>
+              <td>
+                {% if project.status == 'completed' %}<span class="badge bg-success badge-status">{{ project.get_status_display }}</span>
+                {% elif project.status == 'in_progress' %}<span class="badge bg-primary badge-status">{{ project.get_status_display }}</span>
+                {% elif project.status == 'planned' %}<span class="badge bg-warning text-dark badge-status">{{ project.get_status_display }}</span>
+                {% elif project.status == 'on_hold' %}<span class="badge bg-secondary badge-status">{{ project.get_status_display }}</span>
+                {% elif project.status == 'cancelled' %}<span class="badge bg-danger badge-status">{{ project.get_status_display }}</span>
+                {% else %}<span class="badge bg-secondary badge-status">{{ project.get_status_display }}</span>{% endif %}
+              </td>
+              <td>{{ project.start_date|default:"—" }}</td>
+              <td>{{ project.end_date|default:"—" }}</td>
+              <td style="min-width:120px;">
+                <div class="progress"><div class="progress-bar bg-primary" style="width: {{ project.progress_percent }}%"></div></div>
+              </td>
+              <td class="text-end"><a href="{% url 'projects:detail' pk=project.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-muted text-center py-3">No projects assigned yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

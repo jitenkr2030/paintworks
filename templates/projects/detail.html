@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ project.project_number }} – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-diagram-3 text-primary"></i> {{ project.project_number }}</h3>
+    <span class="text-muted small">{{ project.title }}</span>
+  </div>
+  <div class="btn-group">
+    <a href="{% url 'projects:add_task' project.pk %}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Add Task</a>
+    <a href="{% url 'projects:add_report' project.pk %}" class="btn btn-outline-primary"><i class="bi bi-journal-text"></i> Daily Report</a>
+    <a href="{% url 'projects:timeline' project.pk %}" class="btn btn-outline-info"><i class="bi bi-calendar3-range"></i> Timeline</a>
+    <a href="{% url 'analytics:photo_progress' project.pk %}" class="btn btn-outline-info"><i class="bi bi-camera"></i> Photo Progress</a>
+    <a href="{% url 'billing:invoice_create' %}?project={{ project.pk }}" class="btn btn-outline-success"><i class="bi bi-receipt"></i> Generate Invoice</a>
+    <a href="{% url 'projects:list' %}" class="btn btn-link">Back</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Project Info</div>
+      <div class="card-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width:110px;">Number</th><td>{{ project.project_number }}</td></tr>
+          <tr><th>Title</th><td>{{ project.title }}</td></tr>
+          <tr><th>Customer</th><td>{% if project.customer %}<a href="{% url 'crm:customer_detail' project.customer.pk %}">{{ project.customer.name }}</a>{% else %}-{% endif %}</td></tr>
+          <tr><th>Manager</th><td>{{ project.manager|default:"-" }}</td></tr>
+          <tr><th>Start</th><td>{{ project.start_date|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>End</th><td>{{ project.end_date|date:"Y-m-d"|default:"-" }}</td></tr>
+          <tr><th>Status</th><td>
+            {% if project.status == 'completed' %}<span class="badge bg-success">{{ project.get_status_display }}</span>
+            {% elif project.status == 'in_progress' %}<span class="badge bg-primary">{{ project.get_status_display }}</span>
+            {% elif project.status == 'planned' %}<span class="badge bg-warning text-dark">{{ project.get_status_display }}</span>
+            {% elif project.status == 'cancelled' or project.status == 'on_hold' %}<span class="badge bg-danger">{{ project.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ project.get_status_display }}</span>{% endif %}
+          </td></tr>
+        </table>
+        <div class="mt-2">
+          <label class="small text-muted mb-1">Progress</label>
+          <div class="progress" style="height:20px;">
+            <div class="progress-bar bg-{% if project.progress >= 100 %}success{% elif project.progress >= 50 %}primary{% else %}warning{% endif %}" style="width:{{ project.progress|default:0 }}%;">{{ project.progress|default:0 }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-cash-coin"></i> Financials</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr><th>Final Amount</th><td class="text-end">₹{{ project.final_amount|floatformat:2|intcomma }}</td></tr>
+          <tr><th>Advance Received</th><td class="text-end">₹{{ project.advance_received|floatformat:2|intcomma }}</td></tr>
+          <tr class="table-warning"><th>Balance</th><td class="text-end"><strong>₹{{ project.balance|floatformat:2|intcomma }}</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-flag-checkered"></i> Completion</div>
+      <div class="card-body">
+        <form method="post" action="{% url 'projects:completion' project.pk %}">
+          {% csrf_token %}
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="quality_approved" id="qa" {% if project.quality_approved %}checked{% endif %}>
+            <label class="form-check-label small" for="qa">Quality Approved</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="customer_signed" id="cs" {% if project.customer_signed %}checked{% endif %}>
+            <label class="form-check-label small" for="cs">Customer Signed Off</label>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Completion Notes</label>
+            <textarea name="notes" class="form-control form-control-sm" rows="2">{{ project.completion_notes|default:"" }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Save Completion</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-task"></i> Tasks</span>
+        <a href="{% url 'projects:add_task' project.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for t in project.tasks.all %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>{{ t.title }}</strong>
+            <form method="post" action="{% url 'projects:task_status' project.pk t.pk %}" class="d-flex align-items-center gap-1">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                {% for value, label in t.STATUS_CHOICES %}
+                <option value="{{ value }}" {% if t.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </div>
+          {% if t.due_date %}<div class="text-muted small">Due: {{ t.due_date|date:"Y-m-d" }}</div>{% endif %}
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No tasks yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-text"></i> Daily Reports</span>
+        <a href="{% url 'projects:add_report' project.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for r in project.daily_reports.all %}
+        <div class="list-group-item">
+          <strong>{{ r.report_date|date:"Y-m-d" }}</strong>
+          <div class="text-muted small">{{ r.summary|truncatechars:80 }}</div>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No daily reports yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-images"></i> Photos</div>
+      <div class="card-body">
+        <form method="post" action="{% url 'projects:upload_photo' project.pk %}" enctype="multipart/form-data" class="row g-2 mb-2">
+          {% csrf_token %}
+          <div class="col-12">
+            <input type="file" name="photos" class="form-control form-control-sm" multiple accept="image/*">
+          </div>
+          <div class="col-sm-6">
+            <select name="photo_type" class="form-select form-select-sm">
+              {% if photo_types %}{% for value, label in photo_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}{% endif %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <input type="text" name="caption" class="form-control form-control-sm" placeholder="Caption (optional)">
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-upload"></i> Upload</button>
+          </div>
+        </form>
+        {% if project.photos.all %}
+        <div class="row g-2">
+          {% for photo in project.photos.all %}
+          <div class="col-4 col-md-3">
+            <a href="{{ photo.image.url }}" target="_blank"><img src="{{ photo.image.url }}" class="img-fluid rounded border" alt=""></a>
+            {% if photo.caption %}<div class="text-muted small">{{ photo.caption }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">No photos uploaded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-person-badge"></i> Worker Assignments</div>
+      <div class="list-group list-group-flush">
+        {% for a in project.assignments.all %}
+        <div class="list-group-item d-flex justify-content-between">
+          <span>{% if a.worker %}{{ a.worker.name }}{% endif %}</span>
+          <span class="badge bg-secondary">{{ a.get_status_display }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No assignments.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-boxes"></i> Material Issues</div>
+      <div class="list-group list-group-flush">
+        {% for m in project.material_issues.all %}
+        <div class="list-group-item d-flex justify-content-between">
+          <span>{{ m.material.name|default:"Material" }} × {{ m.quantity }}</span>
+          <span class="text-muted small">{{ m.issued_at|date:"Y-m-d" }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No material issues.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-receipt"></i> Invoices</div>
+      <div class="list-group list-group-flush">
+        {% for inv in project.invoices.all %}
+        <div class="list-group-item d-flex justify-content-between">
+          <a href="{% url 'billing:invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a>
+          <span class="text-muted small">₹{{ inv.grand_total|floatformat:2|intcomma }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No invoices yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-shield-check"></i> Quality Checks & Warranty</div>
+      <div class="list-group list-group-flush">
+        {% for qc in project.quality_checks.all %}
+        <div class="list-group-item d-flex justify-content-between">
+          <span>{{ qc.check_name|default:"QC" }}</span>
+          <span class="badge bg-{% if qc.result == 'pass' %}success{% elif qc.result == 'fail' %}danger{% else %}secondary{% endif %}">{{ qc.get_result_display }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No QC items.</div>
+        {% endfor %}
+        {% if project.warranty %}
+          <div class="list-group-item d-flex justify-content-between">
+            <span>Warranty</span>
+            <span class="badge bg-info">{{ project.warranty.get_status_display }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

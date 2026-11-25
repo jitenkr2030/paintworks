@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Office Dashboard – {{ PLATFORM_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <h3 class="mb-0"><i class="bi bi-speedometer2 text-primary"></i> Office Dashboard</h3>
+    <div class="text-muted small">Welcome back, {{ request.user.display_name }}. Here is today's pipeline summary.</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'crm:lead_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus"></i> New Lead</a>
+    <a href="{% url 'booking:create' %}" class="btn btn-primary btn-sm"><i class="bi bi-calendar-plus"></i> New Booking</a>
+    <a href="{% url 'estimation:create' %}" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-plus"></i> New Quotation</a>
+    <a href="{% url 'crm:customer_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-people"></i> Add Customer</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-2 col-6">
+    <a href="{% url 'crm:lead_list' %}" class="text-decoration-none text-reset">
+      <div class="card stat-card p-3 h-100">
+        <div class="stat-label">Open Leads</div>
+        <div class="stat-value text-primary">{{ open_leads }}</div>
+        <div class="text-muted small mt-1"><i class="bi bi-funnel"></i> Active pipeline</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{% url 'booking:list' %}" class="text-decoration-none text-reset">
+      <div class="card stat-card warning p-3 h-100">
+        <div class="stat-label">New Bookings</div>
+        <div class="stat-value text-warning">{{ new_bookings }}</div>
+        <div class="text-muted small mt-1"><i class="bi bi-calendar-check"></i> Awaiting action</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{% url 'estimation:list' %}" class="text-decoration-none text-reset">
+      <div class="card stat-card p-3 h-100">
+        <div class="stat-label">Draft Quotes</div>
+        <div class="stat-value">{{ draft_quotes }}</div>
+        <div class="text-muted small mt-1"><i class="bi bi-pencil-square"></i> Not yet sent</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'estimation:list' %}" class="text-decoration-none text-reset">
+      <div class="card stat-card success p-3 h-100">
+        <div class="stat-label">Sent Quotes</div>
+        <div class="stat-value text-success">{{ sent_quotes }}</div>
+        <div class="text-muted small mt-1"><i class="bi bi-send"></i> Awaiting customer response</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'billing:invoice_list' %}" class="text-decoration-none text-reset">
+      <div class="card stat-card danger p-3 h-100">
+        <div class="stat-label">Pending Invoices</div>
+        <div class="stat-value text-danger">{{ pending_invoices }}</div>
+        <div class="text-muted small mt-1"><i class="bi bi-clock-history"></i> Yet to be paid</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-telephone"></i> Recent Leads</span>
+        <a href="{% url 'crm:lead_list' %}" class="small">View all</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead>
+              <tr><th>Name</th><th>Stage</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              {% for lead in recent_leads %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ lead.name|truncatechars:30 }}</div>
+                    <div class="text-muted small">{{ lead.phone|default:"—" }}</div>
+                  </td>
+                  <td><span class="badge bg-warning text-dark badge-status">{{ lead.get_stage_display }}</span></td>
+                  <td class="text-end">₹{{ lead.estimated_value|intcomma }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted text-center py-3">No leads yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-people"></i> Recent Customers</span>
+        <a href="{% url 'crm:customer_list' %}" class="small">View all</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead>
+              <tr><th>Name</th><th>Type</th><th>Phone</th></tr>
+            </thead>
+            <tbody>
+              {% for c in recent_customers %}
+                <tr>
+                  <td class="fw-semibold">{{ c.name|truncatechars:28 }}</td>
+                  <td><span class="badge bg-secondary badge-status">{{ c.get_customer_type_display }}</span></td>
+                  <td>{{ c.phone|default:"—" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted text-center py-3">No customers yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-text"></i> Recent Quotations</span>
+        <a href="{% url 'estimation:list' %}" class="small">View all</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead>
+              <tr><th>Quote #</th><th>Customer</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for q in recent_quotes %}
+                <tr>
+                  <td class="fw-semibold">{{ q.quote_number }}</td>
+                  <td>{{ q.customer.name|truncatechars:22 }}</td>
+                  <td>
+                    {% if q.status == 'approved' %}<span class="badge bg-success badge-status">{{ q.get_status_display }}</span>
+                    {% elif q.status == 'sent' %}<span class="badge bg-primary badge-status">{{ q.get_status_display }}</span>
+                    {% elif q.status == 'rejected' %}<span class="badge bg-danger badge-status">{{ q.get_status_display }}</span>
+                    {% elif q.status == 'converted' %}<span class="badge bg-success badge-status">{{ q.get_status_display }}</span>
+                    {% elif q.status == 'expired' %}<span class="badge bg-secondary badge-status">{{ q.get_status_display }}</span>
+                    {% else %}<span class="badge bg-warning text-dark badge-status">{{ q.get_status_display }}</span>{% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted text-center py-3">No quotations yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

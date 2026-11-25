@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}My Invoices – {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-file-earmark-text text-primary"></i> My Invoices</h3>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr><th>Invoice #</th><th>Date</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Paid</th><th class="text-end">Balance</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td><a href="{% url 'billing:invoice_detail' inv.pk %}"><strong>{{ inv.invoice_number }}</strong></a></td>
+          <td class="small">{{ inv.invoice_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if inv.status == 'paid' or inv.status == 'approved' %}<span class="badge bg-success">{{ inv.get_status_display }}</span>
+            {% elif inv.status == 'sent' %}<span class="badge bg-primary">{{ inv.get_status_display }}</span>
+            {% elif inv.status == 'overdue' or inv.status == 'cancelled' %}<span class="badge bg-danger">{{ inv.get_status_display }}</span>
+            {% elif inv.status == 'partial' or inv.status == 'draft' or inv.status == 'pending' %}<span class="badge bg-warning text-dark">{{ inv.get_status_display }}</span>
+            {% else %}<span class="badge bg-secondary">{{ inv.get_status_display }}</span>{% endif %}
+          </td>
+          <td class="text-end">₹{{ inv.grand_total|floatformat:2|intcomma }}</td>
+          <td class="text-end text-success">₹{{ inv.paid_amount|floatformat:2|intcomma }}</td>
+          <td class="text-end {% if inv.balance|floatformat:0 > 0 %}text-danger{% endif %}">₹{{ inv.balance|floatformat:2|intcomma }}</td>
+          <td class="text-end">
+            <a href="{% url 'billing:invoice_pdf' inv.pk %}" class="btn btn-sm btn-outline-danger" target="_blank"><i class="bi bi-file-pdf"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No invoices yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
